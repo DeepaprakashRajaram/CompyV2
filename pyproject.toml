@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fileless-detector"
-version = "0.1.0"
-description = "Fileless Malware Detector Foundation"
+name = "compy"
+version = "2.0.0"
+description = "Compsognathus (Compy) - Advanced Fileless Malware Forensic Engine"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -16,6 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
+compy = "fmd.v2.adapters.cli.compy_cli:main"
 fmd = "fmd.cli:app"
 
 [tool.pytest.ini_options]

@@ -1,0 +1,10 @@
+# Compy V2 Configuration Example
+# This configures the engine to run in strict OFFLINE mode with no external symbol lookups.
+
+[volatility]
+enforce_offline = true
+fail_if_missing_symbols = true
+
+[engine]
+log_level = "INFO"
+output_dir = "reports/"

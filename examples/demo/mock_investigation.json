@@ -1,0 +1,17 @@
+# DEMO / MOCK DATA
+# NOT REAL FORENSIC EVIDENCE
+
+{
+  "investigation_id": "INV-mock-001",
+  "artifact_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "status": "SUCCESS",
+  "evidence": [
+    {
+      "node_id": "proc-1234",
+      "type": "PROCESS",
+      "pid": 1234,
+      "name": "mock_malware.exe",
+      "mock_finding": "Injected code mapped in RX region"
+    }
+  ]
+}
