@@ -6,7 +6,7 @@ from volatility3.framework import contexts, automagic
 from volatility3.framework.configuration import requirements
 from volatility3.plugins.windows import pslist
 from volatility3.framework.interfaces import renderers
-from volatility3.framework.exceptions import PluginRequirementException, SymbolError
+from volatility3.framework.exceptions import PluginRequirementException, SymbolError, SymbolSpaceError
 
 from fmd.v2.domain.contracts import (
     ICollector,
@@ -49,6 +49,14 @@ class VolatilityCollector(ICollector):
         status = CapabilityStatus.SUCCESS
         
         try:
+            # Enforce LOCAL_ONLY and FAIL_IF_MISSING safety boundaries
+            from volatility3.framework import constants
+            constants.OFFLINE = True
+            
+            from volatility3.framework.symbols.windows import pdbutil
+            # Neutralize PDB downloading by monkeypatching the class method
+            pdbutil.PDBUtility.download_pdb_isf = classmethod(lambda cls, *args, **kwargs: None)
+
             # PsList execution
             plugin = pslist.PsList(ctx, config_path="plugins.windows.pslist.PsList")
             
@@ -94,7 +102,7 @@ class VolatilityCollector(ICollector):
                     
             capabilities.add(ProviderCapability.PROCESS_LIST)
             
-        except (PluginRequirementException, SymbolError) as e:
+        except (PluginRequirementException, SymbolError, SymbolSpaceError) as e:
             failures.append(f"Missing Symbol or Requirement: {str(e)}")
             status = CapabilityStatus.UNAVAILABLE
         except Exception as e:
@@ -104,7 +112,7 @@ class VolatilityCollector(ICollector):
         return ProviderResult(
             _capability_status=status,
             _available_capabilities=frozenset(capabilities),
-            _extracted_dtos=tuple(extracted_dtos),
+            _extracted_dtos=(tuple(extracted_dtos), tuple()),
             _capability_failures=tuple(failures),
             _provenance=provenance
         )
