@@ -1,0 +1,31 @@
+# Memory Dumps & Malware Evidence
+*.raw
+*.mem
+*.dmp
+*.img
+WannaCry1.raw
+base.raw
+
+# Virtual Environments
+venv/
+.venv/
+env/
+.env
+
+# Python Caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Experimental / Artifacts
+research/checkpoints/
+*.log
+scratch/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

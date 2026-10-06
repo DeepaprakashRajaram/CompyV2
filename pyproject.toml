@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fileless-detector"
+version = "0.1.0"
+description = "Fileless Malware Detector Foundation"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "typer>=0.9.0",
+    "intervaltree>=3.1.0",
+    "volatility3==2.28.2",
+]
+
+[project.scripts]
+fmd = "fmd.cli:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+strict = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fmd"]
