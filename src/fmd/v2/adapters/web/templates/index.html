@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compy V2 - Law Enforcement Forensic Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            accent: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #0b1120; color: #f8fafc; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Header -->
+    <div class="text-center mb-10 w-full max-w-3xl">
+        <div class="inline-flex items-center justify-center p-4 bg-brand-800 rounded-full mb-4 shadow-lg border border-gray-700">
+            <i class="fa-solid fa-shield-halved text-4xl text-blue-500"></i>
+        </div>
+        <h1 class="text-4xl font-bold mb-2 tracking-tight">Compy V2 Forensic Engine</h1>
+        <p class="text-gray-400 text-lg">Automated Fileless Malware Detection & Section 65B Report Generation</p>
+    </div>
+
+    <!-- Main Card -->
+    <div class="glass-panel w-full max-w-3xl rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+        
+        <!-- Step 1: Upload (Changed to File Path) -->
+        <div id="step-upload" class="flex flex-col items-center justify-center">
+            <div class="w-full bg-brand-800 rounded-xl p-8 border border-gray-600 shadow-inner">
+                <h3 class="text-xl font-semibold mb-2 text-center">Enter Absolute File Path</h3>
+                <p class="text-gray-400 mb-6 text-center text-sm">Provide the direct local path to the raw memory dump (e.g., C:\dumps\evidence.raw)</p>
+                
+                <input type="text" id="file-path-input" placeholder="C:\path\to\memory_dump.raw" class="w-full px-4 py-3 rounded bg-brand-900 border border-gray-500 text-white focus:outline-none focus:border-blue-500 mb-6 font-mono text-sm">
+                
+                <button onclick="startAnalysis()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-[1.02]">
+                    Start Forensic Analysis
+                </button>
+            </div>
+            
+            <div class="mt-6 text-sm text-gray-500 flex items-center space-x-2">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Direct disk read enabled. No browser upload required.</span>
+            </div>
+        </div>
+
+        <!-- Step 2: Processing -->
+        <div id="step-processing" class="hidden flex-col items-center justify-center py-10">
+            <div class="relative w-32 h-32 mb-8">
+                <svg class="spinner w-full h-full text-blue-500" viewBox="0 0 50 50">
+                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke="currentColor" stroke-dasharray="90, 150" stroke-linecap="round"></circle>
+                </svg>
+                <i class="fa-solid fa-microchip absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Analyzing Memory...</h2>
+            <p id="processing-status" class="text-blue-400 animate-pulse">Initializing Job Queue...</p>
+            
+            <div class="w-full max-w-md bg-gray-700 rounded-full h-2 mt-6 overflow-hidden">
+                <div id="progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 10%"></div>
+            </div>
+        </div>
+
+        <!-- Step 3: Result -->
+        <div id="step-result" class="hidden flex-col items-center justify-center py-6">
+            <div id="result-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl">
+                <!-- Icon injected by JS -->
+            </div>
+            <h2 class="text-3xl font-bold mb-2">Analysis Complete</h2>
+            <p id="result-text" class="text-xl mb-8">System Status: Unknown</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
+                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
+                    <p class="text-gray-400 text-sm mb-1">Investigation ID</p>
+                    <p id="res-inv-id" class="font-mono text-sm text-white break-all">-</p>
+                </div>
+                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
+                    <p class="text-gray-400 text-sm mb-1">Compliance Standard</p>
+                    <p class="font-semibold text-green-400"><i class="fa-solid fa-check-circle mr-1"></i> Section 65B IEA</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-4 w-full">
+                <a id="download-pdf-btn" href="#" class="w-1/2 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Download PDF</span>
+                </a>
+                <a id="download-json-btn" href="#" class="w-1/2 text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105">
+                    <i class="fa-solid fa-code"></i>
+                    <span>Download JSON (SIEM)</span>
+                </a>
+            </div>
+            <button onclick="resetApp()" class="mt-6 text-gray-400 hover:text-white underline">Analyze Another File</button>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-gray-600 text-sm">
+        <p>Compsognathus V2 &copy; 2026. Authorized Law Enforcement Use Only.</p>
+    </div>
+
+    <script>
+        const stepUpload = document.getElementById('step-upload');
+        const stepProcessing = document.getElementById('step-processing');
+        const stepResult = document.getElementById('step-result');
+        const processingStatus = document.getElementById('processing-status');
+        const progressBar = document.getElementById('progress-bar');
+        
+        let pollInterval;
+
+        function resetApp() {
+            stepResult.classList.add('hidden');
+            stepUpload.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            document.getElementById('file-path-input').value = '';
+            if(pollInterval) clearInterval(pollInterval);
+        }
+
+        async function startAnalysis() {
+            const filePath = document.getElementById('file-path-input').value.trim();
+            if(!filePath) {
+                alert("Please enter a valid absolute file path.");
+                return;
+            }
+
+            stepUpload.classList.add('hidden');
+            stepProcessing.classList.remove('hidden');
+            stepProcessing.classList.add('flex');
+            
+            progressBar.style.width = '20%';
+            processingStatus.innerText = "Submitting Job to Background Queue...";
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file_path: filePath })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    pollJobStatus(data.job_id);
+                } else {
+                    alert('Failed to start analysis.');
+                    resetApp();
+                }
+            } catch (error) {
+                alert('Connection error.');
+                resetApp();
+            }
+        }
+
+        function pollJobStatus(jobId) {
+            let fakeProgress = 20;
+            
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/status/${jobId}`);
+                    const data = await res.json();
+                    
+                    processingStatus.innerText = data.message;
+                    
+                    if (data.status === 'processing') {
+                        // Slowly move progress bar forward for UX
+                        if(fakeProgress < 90) fakeProgress += 2;
+                        progressBar.style.width = `${fakeProgress}%`;
+                    } 
+                    else if (data.status === 'completed') {
+                        clearInterval(pollInterval);
+                        progressBar.style.width = '100%';
+                        setTimeout(() => showResult(data), 500);
+                    }
+                    else if (data.status === 'failed') {
+                        clearInterval(pollInterval);
+                        alert(`Analysis Failed: ${data.message}`);
+                        resetApp();
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 2000);
+        }
+
+        function showResult(data) {
+            stepProcessing.classList.add('hidden');
+            stepProcessing.classList.remove('flex');
+            stepResult.classList.remove('hidden');
+            stepResult.classList.add('flex');
+            
+            document.getElementById('res-inv-id').innerText = data.investigation_id;
+            
+            const resultText = document.getElementById('result-text');
+            const iconContainer = document.getElementById('result-icon-container');
+            
+            if(data.finding.toLowerCase().includes('true')) {
+                resultText.innerHTML = `System Status: <span class="text-red-500 font-bold">Malware Detected (TRUE)</span>`;
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-red-900 text-red-500 border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+                iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else if (data.finding.toLowerCase().includes('false')) {
+                resultText.innerHTML = `System Status: <span class="text-green-500 font-bold">Clean (FALSE)</span>`;
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-green-900 text-green-500 border-2 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]";
+                iconContainer.innerHTML = '<i class="fa-solid fa-shield-check"></i>';
+            } else {
+                resultText.innerHTML = `System Status: <span class="text-yellow-500 font-bold">Inconclusive (UNKNOWN)</span>`;
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-500 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+                iconContainer.innerHTML = '<i class="fa-solid fa-circle-question"></i>';
+            }
+            
+            document.getElementById('download-pdf-btn').href = `/report/download/pdf/${data.investigation_id}`;
+            document.getElementById('download-json-btn').href = `/report/download/json/${data.investigation_id}`;
+        }
+    </script>
+</body>
+</html>

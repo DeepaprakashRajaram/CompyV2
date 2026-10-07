@@ -6,7 +6,7 @@ DOES NOT OWN: Generating the hypothesis.
 """
 
 from dataclasses import dataclass
-from fmd.v2.domain.contracts import IVerifier, IInvestigationCandidate, IGraphQuery
+from fmd.v2.domain.contracts import IVerifier, IInvestigationCandidate, IGraphQuery, ILedgerQuery
 from fmd.v2.domain.contracts import IVerifiedConclusion, TriState
 
 @dataclass
