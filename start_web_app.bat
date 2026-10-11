@@ -13,17 +13,11 @@ if not exist ".venv" (
 echo Activating virtual environment...
 call .venv\Scripts\activate.bat
 
-echo Installing required packages...
-pip install -e .
-pip install fastapi uvicorn python-multipart jinja2 reportlab aiofiles
-
-echo.
-echo ==============================================
 echo Starting Web Server...
-echo Please open http://127.0.0.1:8000 in your browser.
+echo Please open http://127.0.0.1:8085 or http://localhost:8085 in your browser.
 echo Press Ctrl+C to stop the server.
 echo ==============================================
 echo.
 
-python -m uvicorn fmd.v2.adapters.web.app:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn fmd.v2.adapters.web.app:app --host 0.0.0.0 --port 8085
 pause

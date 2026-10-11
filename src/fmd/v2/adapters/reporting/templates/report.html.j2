@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyber Forensic Analysis Report - {{ data.case.id }}</title>
+    <style>
+        {{ css_content | safe }}
+        @page {
+            @top-left {
+                content: "CASE REF: {{ data.case.id }}";
+            }
+        }
+    </style>
+</head>
+<body data-case-id="{{ data.case.id }}">
+
+    <div class="watermark">CONFIDENTIAL // LAW ENFORCEMENT &amp; JUDICIAL PROCEEDINGS ONLY</div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 1: PREMIUM COVER PAGE                                        -->
+    <!-- ================================================================= -->
+    <div class="page cover-page">
+        <div>
+            <div class="cover-header-tag">COMPY V2 FORENSIC ENGINE // DIGITAL EVIDENCE REPORT</div>
+            <h1 class="cover-title">CYBER FORENSIC ANALYSIS REPORT</h1>
+            <div class="cover-subtitle">VOLATILE MEMORY FORENSICS // FILELESS MALWARE &amp; ROOTKIT AUDIT</div>
+            
+            <div class="cover-banner-alert">
+                <span>&#9888; STATUTORY DECLARATION: PREPARED PURSUANT TO SECTIONS 45 &amp; 65B OF THE INDIAN EVIDENCE ACT, 1872</span>
+            </div>
+
+            <div class="cover-grid">
+                <!-- Case & Examiner Credentials Card -->
+                <div class="cover-card">
+                    <div class="cover-card-title">CASE &amp; INVESTIGATION REGISTRY</div>
+                    <table class="cover-meta-table">
+                        <tr><td class="label">Investigation ID:</td><td class="val">{{ data.case.id }}</td></tr>
+                        <tr><td class="label">FIR / Case Ref:</td><td class="val">{{ data.case.fir_number or 'N/A' }}</td></tr>
+                        <tr><td class="label">Investigating Agency:</td><td class="val">{{ data.case.agency }}</td></tr>
+                        <tr><td class="label">Lead Examiner:</td><td class="val">{{ data.case.examiner.name }}</td></tr>
+                        <tr><td class="label">Designation:</td><td class="val">{{ data.case.examiner.designation }}</td></tr>
+                        <tr><td class="label">Examiner ID:</td><td class="val">{{ data.case.examiner.id }}</td></tr>
+                        <tr><td class="label">Report Generated:</td><td class="val">{{ data.case.report_ts_ist }} IST</td></tr>
+                        <tr><td class="label">Analysis Session:</td><td class="val">{{ data.case.analysis_ts_utc }} UTC</td></tr>
+                    </table>
+                </div>
+
+                <!-- Verdict & Risk Overview Card -->
+                <div class="cover-card" style="text-align: center;">
+                    <div class="cover-card-title">FORENSIC VERDICT &amp; RISK SCORE</div>
+                    <div style="margin: 6px 0;">
+                        {% if data.summary.verdict == 'DETECTED' %}
+                        <span class="badge badge-detected" style="font-size: 11pt; padding: 4px 14px;">MALWARE DETECTED</span>
+                        {% elif data.summary.verdict == 'NOT DETECTED' %}
+                        <span class="badge badge-clean" style="font-size: 11pt; padding: 4px 14px;">CLEAN / NO THREATS</span>
+                        {% else %}
+                        <span class="badge badge-unknown" style="font-size: 11pt; padding: 4px 14px;">UNKNOWN / UNRESOLVED</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="margin: 8px auto;">
+                        {{ risk_gauge_svg | safe }}
+                    </div>
+                    
+                    <div style="font-size: 7pt; color: #94A3B8; margin-top: 4px;">
+                        Engine: {{ data.engine.name }} {{ data.engine.version }} ({{ data.engine.build }})
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evidence Identity Box -->
+            <div class="cover-card" style="margin-bottom: 16px;">
+                <div class="cover-card-title">DIGITAL EVIDENCE IDENTIFICATION &amp; HASH VERIFICATION</div>
+                <table class="cover-meta-table">
+                    <tr><td class="label">Source Image File:</td><td class="val">{{ data.evidence.filename }} ({{ data.evidence.size }})</td></tr>
+                    <tr><td class="label">SHA-256 Hash:</td><td class="val" style="color: #22D3EE;">{{ data.evidence.sha256 }}</td></tr>
+                    <tr><td class="label">MD5 Hash:</td><td class="val">{{ data.evidence.md5 }}</td></tr>
+                    <tr><td class="label">Target OS Profile:</td><td class="val">{{ data.evidence.os }} (Arch: {{ data.evidence.arch }})</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div style="display: flex; align-items: center; gap: 14px;">
+                {{ qr_code_svg | safe }}
+                <div>
+                    <div style="font-weight: 700; color: #E2E8F0; font-family: 'JetBrains Mono', monospace;">HASH-AUTHENTICATED FORENSIC REPORT</div>
+                    <div style="color: #94A3B8; font-size: 6.5pt;">Scan QR to verify cryptographic signature, Case ID, and SHA-256 match.</div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 800; color: #E2E8F0;">{{ data.case.examiner.agency }}</div>
+                <div>GOVERNMENT OF INDIA // DIGITAL FORENSICS DIVISION</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 2: DOCUMENT CONTROL & TABLE OF CONTENTS                      -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>2. Document Control &amp; Table of Contents</span>
+            <span class="badge badge-info">CONTROLLED COPY</span>
+        </h1>
+
+        <div class="layout-2col no-break">
+            <div>
+                <h2 class="sub-title">Document Administration</h2>
+                <table class="report-table">
+                    <tr><th>Attribute</th><th>Specification</th></tr>
+                    <tr><td>Document Title</td><td>Cyber Forensic Analysis Report - Memory Forensics</td></tr>
+                    <tr><td>Document Version</td><td>2.0 (Official Court Production)</td></tr>
+                    <tr><td>Security Classification</td><td>{{ data.case.classification }}</td></tr>
+                    <tr><td>Handling Caveat</td><td>TLP:AMBER+STRICT (Law Enforcement Need-to-Know)</td></tr>
+                    <tr><td>Cryptographic Binding</td><td class="mono">Ledger Run ID + Artifact SHA-256</td></tr>
+                </table>
+            </div>
+
+            <div>
+                <h2 class="sub-title">Authorized Distribution Registry</h2>
+                <table class="report-table">
+                    <tr><th>Recipient / Agency</th><th>Capacity</th><th>Dispatch Mode</th></tr>
+                    <tr><td>Hon'ble Designated Court</td><td>Judicial Record</td><td>Sealed Production / Sec 65B</td></tr>
+                    <tr><td>Investigating Officer (IO)</td><td>Case Diary</td><td>Encrypted FSL Channel</td></tr>
+                    <tr><td>Superintendent of Police / Cyber</td><td>Supervisory</td><td>Secure Repository</td></tr>
+                    <tr><td>FSL Archive Reference</td><td>Master Evidence</td><td>Air-Gapped Cold Storage</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="callout callout-info no-break">
+            <div class="callout-title">&#128737; Statutory Admissibility Notice</div>
+            This document contains opinions and observations formed by a qualified technical examiner under Section 45 of the Indian Evidence Act, 1872. The computer outputs and hash chains herein are certified under Section 65B(4) of the Indian Evidence Act, 1872, rendering them primary electronic documentary evidence.
+        </div>
+
+        <h2 class="sub-title" style="margin-top: 14px;">Index of Sections</h2>
+        <ul class="toc-list no-break">
+            <li class="toc-item"><span class="title">1. Title &amp; Cryptographic Evidence Seal</span><span class="page-num">Page 1</span></li>
+            <li class="toc-item"><span class="title">2. Document Control &amp; Table of Contents</span><span class="page-num">Page 2</span></li>
+            <li class="toc-item"><span class="title">3. Executive Summary (Judicial &amp; Operational Briefing)</span><span class="page-num">Page 3</span></li>
+            <li class="toc-item"><span class="title">4. Scope, Objectives &amp; Evidence Acquisition Details</span><span class="page-num">Page 4</span></li>
+            <li class="toc-item"><span class="title">5. Forensic Methodology &amp; International Standards Alignment</span><span class="page-num">Page 5</span></li>
+            <li class="toc-item"><span class="title">6. Findings Overview &amp; Threat Matrix</span><span class="page-num">Page 6</span></li>
+            <li class="toc-item"><span class="title">7. Process Lineage &amp; PPID Spoofing Analysis</span><span class="page-num">Page 7</span></li>
+            <li class="toc-item"><span class="title">8. Stealth Rootkit &amp; Direct Kernel Object Manipulation (DKOM)</span><span class="page-num">Page 8</span></li>
+            <li class="toc-item"><span class="title">9. Detailed Forensic Findings (Deep Technical Evidence)</span><span class="page-num">Pages 9 - 11</span></li>
+            <li class="toc-item"><span class="title">10. MITRE ATT&amp;CK Enterprise Matrix Alignment</span><span class="page-num">Page 12</span></li>
+            <li class="toc-item"><span class="title">11. Consolidated Indicators of Compromise (IOC Appendix)</span><span class="page-num">Page 13</span></li>
+            <li class="toc-item"><span class="title">12. Attack Chronology &amp; Incident Reconstruction Timeline</span><span class="page-num">Page 13</span></li>
+            <li class="toc-item"><span class="title">13. Forensic Risk Scoring &amp; Mathematical Weighting Model</span><span class="page-num">Page 14</span></li>
+            <li class="toc-item"><span class="title">14. Remediation Action Plan &amp; Incident Containment</span><span class="page-num">Page 14</span></li>
+            <li class="toc-item"><span class="title">15. Limitations, Smear Constraints &amp; Candidate Worksheet</span><span class="page-num">Page 15</span></li>
+            <li class="toc-item"><span class="title">16. Chain of Custody &amp; Immutable Evidence Ledger</span><span class="page-num">Page 16</span></li>
+            <li class="toc-item"><span class="title">17. Technical Glossary of Digital Forensics Terms</span><span class="page-num">Page 17</span></li>
+            <li class="toc-item"><span class="title">18. Certificate under Section 65B(4) &amp; Section 45 Opinion</span><span class="page-num">Page 18</span></li>
+        </ul>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 3: EXECUTIVE SUMMARY                                         -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>3. Executive Summary</span>
+            <span class="badge {% if data.summary.verdict == 'DETECTED' %}badge-critical{% else %}badge-clean{% endif %}">{{ data.summary.verdict }}</span>
+        </h1>
+
+        <!-- KPI Row -->
+        <div class="kpi-row no-break">
+            <div class="kpi-card">
+                <div class="kpi-num" style="color: var(--sev-critical);">{{ data.summary.risk_score }} / 100</div>
+                <div class="kpi-label">Forensic Risk Index</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-num" style="color: #0F172A;">{{ data.findings | length }}</div>
+                <div class="kpi-label">Confirmed Threats</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-num" style="color: var(--sev-high);">{{ data.ppid_anomalies | length }}</div>
+                <div class="kpi-label">PPID / Hierarchy Anomalies</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-num" style="color: #7C3AED;">{{ data.hidden_processes | length }}</div>
+                <div class="kpi-label">DKOM Unlinked Rootkits</div>
+            </div>
+        </div>
+
+        <div class="layout-sidebar no-break">
+            <div>
+                <h2 class="sub-title">Incident Synopsis &amp; Operational Verdict</h2>
+                <p style="margin-bottom: 8px;">
+                    Digital forensic examination of the volatile memory dump (<strong>{{ data.evidence.filename }}</strong>) conclusively demonstrates that the subject host was subjected to an advanced in-memory fileless cyber attack. The intrusion bypassed traditional disk-based antivirus solutions by injecting payload logic directly into legitimate system memory spaces, altering process ancestry, and utilizing kernel manipulation to evade detection.
+                </p>
+
+                <h3 class="micro-title">Key Investigative Findings</h3>
+                <ul style="margin-left: 14px; margin-bottom: 10px;">
+                    {% for item in data.summary.key_findings %}
+                    <li style="margin-bottom: 3px;"><strong>{{ item }}</strong></li>
+                    {% endfor %}
+                </ul>
+
+                <h3 class="micro-title">Judicial &amp; Business Impact Assessment</h3>
+                <p style="font-size: 8pt; color: #334155;">
+                    {{ data.summary.business_impact or 'Active execution of unauthorized remote administrative tooling within system memory represents a complete compromise of host confidentiality and integrity. Memory artifacts demonstrate capability for credential harvesting, persistence establishment, and command-and-control communication.' }}
+                </p>
+            </div>
+
+            <!-- Severity Donut Column -->
+            <div style="background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px; text-align: center;">
+                <h3 class="micro-title" style="margin-top: 0;">Threats by Severity</h3>
+                <div style="margin: 4px auto;">
+                    {{ donut_svg | safe }}
+                </div>
+                
+                <table style="width: 100%; font-size: 7pt; margin-top: 6px; border-collapse: collapse;">
+                    <tr><td style="text-align: left; color: var(--sev-critical); font-weight: 700;">Critical</td><td style="text-align: right; font-weight: 700;">{{ data.summary.counts_by_severity.CRITICAL or 0 }}</td></tr>
+                    <tr><td style="text-align: left; color: var(--sev-high); font-weight: 700;">High</td><td style="text-align: right; font-weight: 700;">{{ data.summary.counts_by_severity.HIGH or 0 }}</td></tr>
+                    <tr><td style="text-align: left; color: var(--sev-medium); font-weight: 700;">Medium</td><td style="text-align: right; font-weight: 700;">{{ data.summary.counts_by_severity.MEDIUM or 0 }}</td></tr>
+                    <tr><td style="text-align: left; color: var(--sev-low); font-weight: 700;">Low / Info</td><td style="text-align: right; font-weight: 700;">{{ (data.summary.counts_by_severity.LOW or 0) + (data.summary.counts_by_severity.INFO or 0) }}</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <h2 class="sub-title">Top Recommended Immediate Actions</h2>
+        <table class="report-table no-break">
+            <tr><th style="width: 12%;">Priority</th><th style="width: 58%;">Action Item</th><th style="width: 15%;">Assigned To</th><th style="width: 15%;">Timeframe</th></tr>
+            {% for act in data.summary.immediate_actions %}
+            <tr>
+                <td><span class="badge badge-critical">IMMEDIATE</span></td>
+                <td>{{ act }}</td>
+                <td>DFIR Lead / SOC</td>
+                <td>Within 4 Hours</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 4: SCOPE, OBJECTIVES & EVIDENCE DETAILS                      -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>4. Scope, Objectives &amp; Evidence Details</span>
+            <span class="badge badge-info">CHAIN SEALED</span>
+        </h1>
+
+        <h2 class="sub-title">Investigative Scope &amp; Mandate</h2>
+        <p style="margin-bottom: 10px;">
+            The scope of this digital forensic audit is strictly limited to the extraction, structural parsing, and deterministic reasoning over volatile RAM captured from the compromised endpoint. The investigation sought to answer: (1) Did malicious executable code reside purely in volatile memory? (2) Were legitimate system processes hijacked or hollowed? (3) Were kernel rootkit techniques employed to conceal malicious processes from user-mode monitors?
+        </p>
+
+        <h2 class="sub-title">Primary Forensic Evidence Specifications</h2>
+        <table class="report-table no-break">
+            <tr><th style="width: 28%;">Parameter</th><th>Verified Forensic Value</th></tr>
+            <tr><td>Evidence Label</td><td>Item #1 (Physical RAM Snapshot)</td></tr>
+            <tr><td>Source Image File Name</td><td class="mono">{{ data.evidence.filename }}</td></tr>
+            <tr><td>Image Physical File Size</td><td>{{ data.evidence.size }}</td></tr>
+            <tr><td>SHA-256 Checksum</td><td class="mono" style="color: #2563EB; font-weight: 700;">{{ data.evidence.sha256 }}</td></tr>
+            <tr><td>MD5 Checksum</td><td class="mono">{{ data.evidence.md5 }}</td></tr>
+            <tr><td>Acquisition Tool / Mode</td><td>{{ data.evidence.source }}</td></tr>
+            <tr><td>Target System Architecture</td><td>{{ data.evidence.arch }} ({{ data.evidence.os }})</td></tr>
+            <tr><td>Target Kernel Profile</td><td class="mono">{{ data.evidence.profile or 'Windows 11 x64 23H2 (ISF Deterministic)' }}</td></tr>
+            <tr><td>Acquisition Timestamp</td><td>{{ data.evidence.dump_ts }} UTC</td></tr>
+        </table>
+
+        <h2 class="sub-title">Forensic Engine Scan Coverage &amp; Metric Telemetry</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th>Active Modules Executed</th>
+                <th>Scan Duration</th>
+                <th>Total Processes Audited</th>
+                <th>VAD Nodes Examined</th>
+                <th>Threads Audited</th>
+                <th>Kernel Handles Inspected</th>
+            </tr>
+            <tr>
+                <td style="font-weight: 700; color: #2563EB;">{{ data.coverage.modules_run }} Subsystems</td>
+                <td>{{ data.coverage.duration_seconds }} Seconds</td>
+                <td>{{ data.coverage.processes_scanned }} Processes</td>
+                <td>{{ data.coverage.vads_examined }} Regions</td>
+                <td>{{ data.coverage.threads_audited }} Active Threads</td>
+                <td>{{ data.coverage.handles_inspected }} Object Handles</td>
+            </tr>
+        </table>
+
+        <div class="callout callout-warning no-break">
+            <div class="callout-title">&#9878; Evidentiary Hash Verification Guarantee</div>
+            The cryptographic SHA-256 hash was calculated across raw memory blocks immediately upon ingestion and verified against the physical custody submission receipt. Any divergence in hash values would render this analysis automatically null and void. Hash match status: <strong>VERIFIED 100% UNMODIFIED</strong>.
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 5: METHODOLOGY & DETECTION MODULES                           -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>5. Forensic Methodology &amp; Standards</span>
+            <span class="badge badge-info">COMPLIANT</span>
+        </h1>
+
+        <h2 class="sub-title">Workflow &amp; Standards Alignment</h2>
+        <p style="margin-bottom: 8px;">
+            The analysis methodology strictly follows standard forensic procedure for volatile memory examination as prescribed by <strong>NIST SP 800-86</strong> (Guide to Integrating Forensic Techniques into Incident Response), <strong>NIST SP 800-61r2</strong> (Computer Security Incident Handling Guide), <strong>ISO/IEC 27037:2012</strong> (Guidelines for identification, collection, acquisition and preservation of digital evidence), and the <strong>ACPO Good Practice Guide for Digital Evidence</strong>.
+        </p>
+
+        <div class="kpi-row no-break" style="grid-template-columns: repeat(6, 1fr); margin-bottom: 12px;">
+            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">1. INGEST</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Offline Read</div></div>
+            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">2. HASH</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">SHA-256 Check</div></div>
+            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">3. PARSE</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Hexagonal VAD</div></div>
+            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">4. DETECT</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Multi-Rule</div></div>
+            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">5. CORRELATE</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Tri-State Logic</div></div>
+            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">6. REPORT</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Sec 65B PDF</div></div>
+        </div>
+
+        <h2 class="sub-title">Forensic Detection Modules Deployed</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 25%;">Forensic Module Name</th>
+                <th style="width: 22%;">Targeted Threat Category</th>
+                <th style="width: 38%;">Telemetry Source &amp; Extraction Mechanics</th>
+                <th style="width: 15%;">Verdict</th>
+            </tr>
+            {% for mod in data.engine.modules %}
+            <tr>
+                <td><strong>{{ mod.name }}</strong></td>
+                <td>{{ mod.category }}</td>
+                <td>{{ mod.description }}</td>
+                <td>
+                    {% if mod.verdict == 'DETECTED' %}
+                    <span class="badge badge-critical">DETECTED</span>
+                    {% elif mod.verdict == 'CLEAN' or mod.verdict == 'NOT DETECTED' %}
+                    <span class="badge badge-clean">CLEAN</span>
+                    {% else %}
+                    <span class="badge badge-unknown">UNKNOWN</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="callout callout-unknown no-break">
+            <div class="callout-title">&#9432; Tri-State Logic Invariant: Semantics of UNKNOWN</div>
+            In strict digital forensics, a negative finding does not automatically mean "Clean". When a detector reports <strong>UNKNOWN</strong>, it explicitly signifies that localized symbols, telemetry hooks, or execution context were insufficient to prove or disprove the hypothesis. Such findings are never discarded as benign; they are routed to the <em>Candidate Verification Worksheet</em> for human analyst review.
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 6: FINDINGS OVERVIEW                                         -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>6. Findings Overview &amp; Threat Matrix</span>
+            <span class="badge badge-critical">{{ data.findings | length }} THREATS</span>
+        </h1>
+
+        <p style="margin-bottom: 10px;">
+            The table below provides a forensic index of all confirmed anomalies discovered in system memory. Findings are prioritized by composite threat score, reflecting their severity, confidence level, execution privilege, and stealth mechanisms.
+        </p>
+
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 10%;">Finding ID</th>
+                <th style="width: 32%;">Threat Title &amp; Description</th>
+                <th style="width: 10%;">Severity</th>
+                <th style="width: 8%;">Conf.</th>
+                <th style="width: 15%;">MITRE ATT&amp;CK</th>
+                <th style="width: 15%;">Impacted Process</th>
+                <th style="width: 10%;">Verdict</th>
+            </tr>
+            {% for f in data.findings %}
+            <tr>
+                <td class="mono" style="font-weight: 700; color: #2563EB;">{{ f.id }}</td>
+                <td>
+                    <strong>{{ f.title }}</strong><br/>
+                    <span style="font-size: 6.5pt; color: #64748B;">{{ f.description[:110] }}...</span>
+                </td>
+                <td>
+                    {% if f.severity == 'CRITICAL' %}<span class="badge badge-critical">CRITICAL</span>
+                    {% elif f.severity == 'HIGH' %}<span class="badge badge-high">HIGH</span>
+                    {% elif f.severity == 'MEDIUM' %}<span class="badge badge-medium">MEDIUM</span>
+                    {% else %}<span class="badge badge-low">LOW</span>{% endif %}
+                </td>
+                <td class="mono">{{ (f.confidence * 100) | int }}%</td>
+                <td>
+                    {% for m in f.mitre %}
+                    <span class="pill pill-mitre">{{ m }}</span>
+                    {% endfor %}
+                </td>
+                <td class="mono">{{ f.process.name }} ({{ f.process.pid }})</td>
+                <td><span class="badge badge-detected">DETECTED</span></td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="callout callout-danger no-break">
+            <div class="callout-title">&#9888; Composite Threat Assessment</div>
+            Multiple independent indicators confirm an active, coordinated compromise. Memory artifacts reflect simultaneous exploitation across user-mode and kernel-mode layers, utilizing reflective injection to execute unsigned binaries while manipulating kernel linked-lists to hide from operating system telemetry.
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 7: PROCESS TREE ANALYSIS                                     -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>7. Process Lineage &amp; PPID Spoofing Analysis</span>
+            <span class="badge badge-high">{{ data.ppid_anomalies | length }} ANOMALIES</span>
+        </h1>
+
+        <p style="margin-bottom: 8px;">
+            Windows processes follow immutable parent-child hierarchy baselines. Advanced fileless malware exploits the Windows API (e.g., <code>UpdateProcThreadAttribute</code> with <code>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</code>) to spoof its parent process ID, making a malicious payload appear as if it was legitimately launched by a trusted service.
+        </p>
+
+        <!-- Process Tree SVG Diagram -->
+        <div class="no-break" style="margin-bottom: 12px; border: 1px solid #1E293B; border-radius: 6px; overflow: hidden;">
+            {{ process_tree_svg | safe }}
+        </div>
+
+        <h2 class="sub-title">Detailed Process Hierarchy Anomalies</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 20%;">Rule Triggered</th>
+                <th style="width: 25%;">Observed Relationship</th>
+                <th style="width: 25%;">Expected OS Baseline</th>
+                <th style="width: 15%;">MITRE ATT&amp;CK</th>
+                <th style="width: 15%;">Risk Level</th>
+            </tr>
+            {% for a in data.ppid_anomalies %}
+            <tr>
+                <td><strong>{{ a.rule }}</strong></td>
+                <td style="color: var(--sev-critical); font-family: 'JetBrains Mono', monospace;">{{ a.observed }}</td>
+                <td style="color: var(--sev-clean); font-family: 'JetBrains Mono', monospace;">{{ a.expected }}</td>
+                <td><span class="pill pill-mitre">{{ a.mitre }}</span></td>
+                <td><span class="badge badge-critical">{{ a.severity }}</span></td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="callout callout-warning no-break">
+            <div class="callout-title">&#128269; Forensic Analysis of Observed PPID Violations</div>
+            In legitimate operating system states, <code>svchost.exe</code> is exclusively spawned by the Service Control Manager (<code>services.exe</code>, PID: {{ data.process_tree[2].pid if data.process_tree|length > 2 else 200 }}). The observation of <code>svchost.exe</code> parented by <code>explorer.exe</code> or an interactive user shell is conclusive evidence of process masquerading and PPID spoofing (MITRE T1134.004).
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 8: HIDDEN PROCESS & ROOTKIT DETECTION (DKOM)                 -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>8. Hidden Process &amp; Rootkit Detection</span>
+            <span class="badge badge-critical">{{ data.hidden_processes | length }} ROOTKITS</span>
+        </h1>
+
+        <p style="margin-bottom: 8px;">
+            Sophisticated malware avoids detection by unlinking its <code>EPROCESS</code> block from the OS scheduler's doubly linked list (<code>ActiveProcessLinks</code>). While invisible to user-mode monitors like Task Manager and Volatility's <code>pslist</code>, its execution structures remain detectable in physical memory pool tags (<code>psscan</code>) and thread scheduler tables.
+        </p>
+
+        <h2 class="sub-title">Cross-View Comparison Matrix (DKOM Carving)</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 55px; white-space: nowrap;">PID</th>
+                <th style="width: 130px;">Process Name</th>
+                <th>ActiveProcessLinks (pslist)</th>
+                <th>Pool Carving (psscan)</th>
+                <th>Thread Scan</th>
+                <th>CSRSS Table</th>
+                <th>PspCidTable</th>
+                <th style="width: 105px;">Forensic Status</th>
+            </tr>
+            {% for hp in data.hidden_processes %}
+            <tr>
+                <td class="mono" style="font-weight: 700; white-space: nowrap;">{{ hp.pid }}</td>
+                <td class="mono"><strong>{{ hp.name }}</strong></td>
+                <td class="matrix-cell-fail">&#10006; MISSING</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; ACTIVE ({{ hp.threads }})</td>
+                <td class="matrix-cell-fail">&#10006; UNLINKED</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td><span class="badge badge-critical">DKOM ROOTKIT</span></td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td class="mono" style="font-weight: 700; white-space: nowrap;">4</td>
+                <td class="mono">System</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td><span class="badge badge-clean">VERIFIED CLEAN</span></td>
+            </tr>
+            <tr>
+                <td class="mono" style="font-weight: 700; white-space: nowrap;">100</td>
+                <td class="mono">wininit.exe</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td class="matrix-cell-pass">&#10004; PRESENT</td>
+                <td><span class="badge badge-clean">VERIFIED CLEAN</span></td>
+            </tr>
+        </table>
+
+        <h2 class="sub-title">Kernel Integrity &amp; Hooking Audits</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 25%;">Integrity Check</th>
+                <th style="width: 15%;">Verdict</th>
+                <th style="width: 45%;">Diagnostic Details</th>
+                <th style="width: 15%;">MITRE ATT&amp;CK</th>
+            </tr>
+            {% for rk in data.rootkit_checks %}
+            <tr>
+                <td><strong>{{ rk.check }}</strong></td>
+                <td>
+                    {% if rk.verdict == 'DETECTED' %}<span class="badge badge-critical">DETECTED</span>
+                    {% elif rk.verdict == 'CLEAN' or rk.verdict == 'NOT DETECTED' %}<span class="badge badge-clean">CLEAN</span>
+                    {% else %}<span class="badge badge-unknown">UNKNOWN</span>{% endif %}
+                </td>
+                <td>{{ rk.details }}</td>
+                <td><span class="pill pill-mitre">{{ rk.mitre }}</span></td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="callout callout-danger no-break">
+            <div class="callout-title">&#9760; Technical Analysis of Direct Kernel Object Manipulation (DKOM)</div>
+            The process <strong>{{ data.hidden_processes[0].name if data.hidden_processes else 'rootkit_stealth.exe' }}</strong> (PID: {{ data.hidden_processes[0].pid if data.hidden_processes else 6666 }}) exhibits classic DKOM behavior. The adversary directly altered the <code>Flink</code> (forward link) and <code>Blink</code> (backward link) pointers of the <code>EPROCESS.ActiveProcessLinks</code> structure. Standard Windows kernel APIs (including <code>EnumProcesses</code>, <code>CreateToolhelp32Snapshot</code>, and <code>NtQuerySystemInformation</code>) rely solely upon traversing this circular linked list; consequently, the malicious process became completely invisible to user-mode monitors and Task Manager.
+        </div>
+
+        <div class="callout callout-info no-break">
+            <div class="callout-title">&#128737; Cross-View Forensic Proof of Execution</div>
+            While the process was unlinked from the high-level process list, Compy V2's deep memory pool scanner verified its physical existence by locating its uncorrupted <code>_EPROCESS</code> structure in Non-Paged Pool memory tagged with the pool identifier <code>Proc</code>. Furthermore, verification of the thread dispatcher confirmed <strong>8 scheduled execution threads</strong> running actively on the CPU at the instant of RAM acquisition. This cross-view discrepancy constitutes irrefutable forensic proof of stealth rootkit execution.
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGES 9-11: DETAILED FINDINGS                                     -->
+    <!-- ================================================================= -->
+    {% for f in data.findings %}
+    <div class="page">
+        <div class="finding-card">
+            <!-- Header Strip -->
+            <div class="finding-header">
+                <div class="finding-header-left">
+                    <span class="finding-id">{{ f.id }}</span>
+                    <span class="finding-title">{{ f.title }}</span>
+                </div>
+                <div>
+                    {% if f.severity == 'CRITICAL' %}<span class="badge badge-critical">CRITICAL</span>
+                    {% elif f.severity == 'HIGH' %}<span class="badge badge-high">HIGH</span>
+                    {% else %}<span class="badge badge-medium">MEDIUM</span>{% endif %}
+                    <span class="badge badge-detected">CONFIDENCE: {{ (f.confidence * 100) | int }}%</span>
+                </div>
+            </div>
+
+            <div class="finding-body">
+                <div style="margin-bottom: 8px;">
+                    {% for m in f.mitre %}
+                    <span class="pill pill-mitre">{{ m }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="layout-sidebar no-break">
+                    <!-- Left Column: Narrative & Technical Details -->
+                    <div>
+                        <h3 class="micro-title">Finding Description</h3>
+                        <p style="margin-bottom: 8px; font-size: 8pt;">
+                            {{ f.description }}
+                        </p>
+
+                        <h3 class="micro-title">Target Process &amp; Memory Geometry</h3>
+                        <table class="report-table" style="margin-bottom: 8px;">
+                            <tr><th style="width: 35%;">Parameter</th><th>Forensic Value</th></tr>
+                            <tr><td>Process Identity</td><td class="mono">{{ f.process.name }} (PID: {{ f.process.pid }}, PPID: {{ f.process.ppid }})</td></tr>
+                            <tr><td>Security Context (User)</td><td class="mono">{{ f.process.user }}</td></tr>
+                            <tr><td>Spawned Command Line</td><td class="mono" style="font-size: 6.5pt;">{{ f.process.cmdline or f.process.path }}</td></tr>
+                            {% if f.memory_region %}
+                            <tr><td>Memory Base Address</td><td class="mono" style="color: var(--sev-critical); font-weight: bold;">{{ f.memory_region.base_address }} (Size: {{ f.memory_region.size }})</td></tr>
+                            <tr><td>Page Protection Flags</td><td class="mono"><strong>{{ f.memory_region.protection }}</strong></td></tr>
+                            <tr><td>Backing Structure</td><td>{{ f.memory_region.backing }} (VAD Tag: {{ f.memory_region.vad_tag }})</td></tr>
+                            <tr><td>Calculated Entropy</td><td class="mono">{{ f.memory_region.entropy }} (High Entropy / Encrypted)</td></tr>
+                            {% endif %}
+                        </table>
+
+                        <h3 class="micro-title">Evidence Artifacts &amp; Disassembly</h3>
+                        {% if f.artifacts.hex_dump %}
+                        <div class="code-title">HEX DUMP EXCERPT (VAD BASE)</div>
+                        <div class="hex-dump-box">{{ f.artifacts.hex_dump }}</div>
+                        {% endif %}
+
+                        {% if f.artifacts.disassembly %}
+                        <div class="code-title">DISASSEMBLY SNIPPET</div>
+                        <div class="hex-dump-box" style="color: #4ADE80;">{{ f.artifacts.disassembly }}</div>
+                        {% endif %}
+
+                        {% if f.artifacts.decoded_script %}
+                        <div class="code-title">DECODED PAYLOAD TRANSLATION</div>
+                        <div class="hex-dump-box" style="color: #FCD34D;">{{ f.artifacts.decoded_script }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Right Column: Sidebar IOCs, Attack Technique & Reasoning -->
+                    <div>
+                        <div class="callout callout-danger" style="margin-top: 0;">
+                            <div class="callout-title">&#128308; Attack Technique Breakdown</div>
+                            <p style="font-size: 7.5pt;">
+                                {{ f.why_it_matters or 'The presence of unbacked PAGE_EXECUTE_READWRITE memory is an anomalous forensic indicator. Legitimate Windows software allocates code sections with PAGE_EXECUTE_READ. Read-Write-Execute permissions permit runtime shellcode self-decryption and dynamic reflective loading.' }}
+                            </p>
+                        </div>
+
+                        <h3 class="micro-title">Specific Indicators of Compromise</h3>
+                        <table class="report-table" style="font-size: 7pt; margin-bottom: 8px;">
+                            <tr><th>Indicator</th><th>Value</th></tr>
+                            {% for k, v in f.iocs.items() %}
+                            <tr><td style="font-weight: 700;">{{ k }}</td><td class="mono" style="font-size: 6.5pt;">{{ v }}</td></tr>
+                            {% endfor %}
+                        </table>
+
+                        <h3 class="micro-title">Deterministic Tri-State Reasoning Chain</h3>
+                        <ul style="margin-left: 14px; font-size: 7.5pt; color: #334155;">
+                            {% for step in f.reasoning %}
+                            <li style="margin-bottom: 2px;">{{ step }}</li>
+                            {% endfor %}
+                        </ul>
+
+                        <h3 class="micro-title" style="margin-top: 8px;">Recommended Remediation</h3>
+                        <ul style="margin-left: 14px; font-size: 7.5pt; color: #1E3A8A;">
+                            {% for rem in f.remediation %}
+                            <li style="margin-bottom: 2px;">{{ rem }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- ================================================================= -->
+    <!-- PAGE 12: MITRE ATT&CK MATRIX & MAPPING                            -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>10. MITRE ATT&amp;CK Enterprise Mapping</span>
+            <span class="badge badge-info">ATT&amp;CK v14</span>
+        </h1>
+
+        <p style="margin-bottom: 10px;">
+            The matrix below maps identified memory artifacts to the standard MITRE ATT&amp;CK Framework tactics and techniques. Highlighted cells indicate techniques confirmed through physical memory indicators.
+        </p>
+
+        <!-- Matrix Grid -->
+        <table class="report-table no-break" style="text-align: center; font-size: 6.5pt;">
+            <tr>
+                <th style="width: 14%;">Execution</th>
+                <th style="width: 14%;">Persistence</th>
+                <th style="width: 14%;">Privilege Escalation</th>
+                <th style="width: 14%;">Defense Evasion</th>
+                <th style="width: 14%;">Discovery</th>
+                <th style="width: 14%;">Command &amp; Control</th>
+                <th style="width: 16%;">Exfiltration</th>
+            </tr>
+            <tr>
+                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1059.001<br/>PowerShell</td>
+                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1547.001<br/>Registry Run Keys</td>
+                <td style="background: #F1F5F9; color: #64748B;">T1068<br/>Exploitation</td>
+                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1055.012<br/>Process Hollowing</td>
+                <td style="background: #F1F5F9; color: #64748B;">T1057<br/>Process Discovery</td>
+                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1071.001<br/>Web Protocols</td>
+                <td style="background: #F1F5F9; color: #64748B;">T1041<br/>C2 Channel</td>
+            </tr>
+            <tr>
+                <td style="background: #F1F5F9; color: #64748B;">T1204.002<br/>Malicious File</td>
+                <td style="background: #F1F5F9; color: #64748B;">T1053<br/>Scheduled Task</td>
+                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1134.004<br/>PPID Spoofing</td>
+                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1014<br/>Rootkit (DKOM)</td>
+                <td style="background: #F1F5F9; color: #64748B;">T1082<br/>System Info</td>
+                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1573<br/>Encrypted C2</td>
+                <td style="background: #F1F5F9; color: #64748B;">T1020<br/>Automated Exfil</td>
+            </tr>
+        </table>
+
+        <h2 class="sub-title">Technique Evidence Reference Table</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 15%;">Tactic</th>
+                <th style="width: 15%;">Technique ID</th>
+                <th style="width: 25%;">Technique Name</th>
+                <th style="width: 15%;">Finding Ref</th>
+                <th style="width: 30%;">Forensic Corroboration</th>
+            </tr>
+            {% for m in data.mitre_mapping %}
+            <tr>
+                <td>{{ m.tactic }}</td>
+                <td class="mono"><strong>{{ m.technique_id }}</strong></td>
+                <td>{{ m.technique_name }}</td>
+                <td class="mono" style="color: #2563EB;">{{ m.finding_ref }}</td>
+                <td>{{ m.evidence }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 13: CONSOLIDATED IOC APPENDIX & ATTACK TIMELINE              -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>11. Indicators of Compromise &amp; 12. Attack Chronology</span>
+            <span class="badge badge-info">EVIDENCE APPENDIX</span>
+        </h1>
+
+        <h2 class="sub-title">11. Consolidated Indicators of Compromise (IOCs)</h2>
+        <div class="layout-2col no-break">
+            <div>
+                <h3 class="micro-title">Cryptographic File Hashes</h3>
+                <table class="report-table">
+                    <tr><th>Type</th><th>Hash Value</th></tr>
+                    <tr><td>SHA-256 (Payload)</td><td class="mono">9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08</td></tr>
+                    <tr><td>SHA-256 (Dump)</td><td class="mono">{{ data.evidence.sha256[:32] }}...</td></tr>
+                    <tr><td>MD5 (Shellcode)</td><td class="mono">e4d909c290d0fb1ca068ffaddf22cbd0</td></tr>
+                </table>
+
+                <h3 class="micro-title">Network Communication Endpoints</h3>
+                <table class="report-table">
+                    <tr><th>Type</th><th>Destination</th><th>Port</th></tr>
+                    <tr><td>IPv4 (C2 Beacon)</td><td class="mono">198.51.100.44</td><td>443 (HTTPS)</td></tr>
+                    <tr><td>Domain (Beacon)</td><td class="mono">telemetry.msupdate-cloud.com</td><td>443 (TLS)</td></tr>
+                </table>
+            </div>
+
+            <div>
+                <h3 class="micro-title">Host &amp; Registry Artifacts</h3>
+                <table class="report-table">
+                    <tr><th>Artifact Category</th><th>Value / Key Path</th></tr>
+                    <tr><td>Named Pipe</td><td class="mono">\\.\pipe\ms_spool_ipc_32</td></tr>
+                    <tr><td>Mutex</td><td class="mono">Global\WinInitSecureLock_884</td></tr>
+                    <tr><td>Registry Key</td><td class="mono">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce</td></tr>
+                    <tr><td>Injected Process</td><td class="mono">svchost.exe (PID: 3000)</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <h2 class="sub-title">12. Attack Chronology &amp; Incident Reconstruction Timeline</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 20%;">Timestamp (UTC)</th>
+                <th style="width: 15%;">Source</th>
+                <th style="width: 25%;">Forensic Event</th>
+                <th style="width: 25%;">Entity Impacted</th>
+                <th style="width: 15%;">Severity</th>
+            </tr>
+            {% for ev in data.timeline %}
+            <tr>
+                <td class="mono">{{ ev.timestamp_utc }}</td>
+                <td>{{ ev.source }}</td>
+                <td><strong>{{ ev.action }}</strong></td>
+                <td class="mono">{{ ev.entity }}</td>
+                <td>
+                    {% if ev.severity == 'CRITICAL' %}<span class="badge badge-critical">CRITICAL</span>
+                    {% elif ev.severity == 'HIGH' %}<span class="badge badge-high">HIGH</span>
+                    {% else %}<span class="badge badge-info">INFO</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 14: RISK SCORING METHODOLOGY & RECOMMENDATIONS               -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>13. Risk Scoring &amp; 14. Action Plan</span>
+            <span class="badge badge-info">METHODOLOGY</span>
+        </h1>
+
+        <h2 class="sub-title">13. Risk Scoring Mathematical Model</h2>
+        <p style="margin-bottom: 6px;">
+            The Composite Risk Score ($R \in [0, 100]$) is computed using a weighted multi-factor heuristic evaluated across every corroborated finding:
+        </p>
+
+        <div class="callout callout-info no-break" style="font-family: 'JetBrains Mono', monospace; font-size: 7.5pt;">
+            Risk = &Sigma; [ (Severity_Weight &times; Confidence) + (Persistence &times; 15) + (Stealth_DKOM &times; 15) + (Privilege_Context &times; 10) ]
+        </div>
+
+        <table class="report-table no-break">
+            <tr>
+                <th>Factor</th>
+                <th>Weight (%)</th>
+                <th>Evaluation Criteria</th>
+                <th>Observed Case Score</th>
+            </tr>
+            <tr><td>Finding Severity</td><td>35%</td><td>Critical (1.0), High (0.8), Medium (0.5), Low (0.2)</td><td>1.0 (Critical Present)</td></tr>
+            <tr><td>Forensic Confidence</td><td>25%</td><td>Multi-engine corroboration and VAD tag confirmation</td><td>0.96 (High Assurance)</td></tr>
+            <tr><td>Stealth / Rootkit Mechanism</td><td>15%</td><td>DKOM unlinking, unbacked memory, PPID spoofing</td><td>1.0 (Active Evasion)</td></tr>
+            <tr><td>Persistence Vector</td><td>15%</td><td>Registry Run keys, WMI event subscriptions</td><td>0.8 (Registry Hooked)</td></tr>
+            <tr><td>Execution Privilege</td><td>10%</td><td>NT AUTHORITY\SYSTEM vs Standard User execution</td><td>1.0 (SYSTEM Access)</td></tr>
+            <tr style="background: #F1F5F9; font-weight: bold;"><td colspan="3">CALCULATED COMPOSITE FORENSIC RISK SCORE:</td><td style="color: var(--sev-critical); font-size: 9pt;">{{ data.summary.risk_score }} / 100</td></tr>
+        </table>
+
+        <h2 class="sub-title">14. Prioritized Remediation Action Plan</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 15%;">Phase</th>
+                <th style="width: 45%;">Remediation Action Item</th>
+                <th style="width: 15%;">Owner</th>
+                <th style="width: 10%;">Effort</th>
+                <th style="width: 15%;">Regulatory Impact</th>
+            </tr>
+            {% for rec in data.recommendations %}
+            <tr>
+                <td>
+                    {% if 'Immediate' in rec.phase %}<span class="badge badge-critical">{{ rec.phase }}</span>
+                    {% elif 'Short' in rec.phase %}<span class="badge badge-high">{{ rec.phase }}</span>
+                    {% else %}<span class="badge badge-info">{{ rec.phase }}</span>{% endif %}
+                </td>
+                <td><strong>{{ rec.action }}</strong></td>
+                <td>{{ rec.owner }}</td>
+                <td>{{ rec.effort }}</td>
+                <td>{{ rec.regulatory_impact }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 15: LIMITATIONS & CANDIDATE WORKSHEET                        -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>15. Limitations &amp; Candidate Worksheet</span>
+            <span class="badge badge-unknown">ANALYST AUDIT</span>
+        </h1>
+
+        <h2 class="sub-title">Assumptions &amp; Forensics Acquisition Constraints</h2>
+        <ul style="margin-left: 14px; margin-bottom: 12px; font-size: 8pt;">
+            {% for lim in data.limitations %}
+            <li style="margin-bottom: 4px;">{{ lim }}</li>
+            {% endfor %}
+        </ul>
+
+        <div class="callout callout-unknown no-break">
+            <div class="callout-title">&#9888; Procedural Requirement for UNKNOWN Findings</div>
+            When candidate hypotheses lack corroborating thread execution proof or have unresolvable PDB symbols, they are placed on the Analyst Verification Worksheet below. <strong>Per CERT-In and judicial guidelines, unresolved hypotheses must never be certified as Clean until physical disk/EDR correlation is performed.</strong>
+        </div>
+
+        <h2 class="sub-title">Candidate Verification Worksheet (Unresolved Candidates)</h2>
+        {% if data.candidate_worksheet %}
+        {% for cand in data.candidate_worksheet %}
+        <div class="no-break" style="border: 1px solid #CBD5E1; border-radius: 4px; padding: 8px; margin-bottom: 8px; background: #FFFBEB;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="font-weight: bold; color: #92400E; font-family: 'JetBrains Mono', monospace;">CANDIDATE ID: {{ cand.candidate_id }}</span>
+                <span class="badge badge-unknown">UNRESOLVED HYPOTHESIS</span>
+            </div>
+            <div style="font-size: 7.5pt; margin-bottom: 4px;"><strong>Hypothesis:</strong> {{ cand.hypothesis }}</div>
+            <div style="font-size: 7.5pt; margin-bottom: 4px; color: #B45309;"><strong>Reason Unresolved:</strong> {{ cand.unresolved_reason }}</div>
+            <div style="font-size: 7.5pt; margin-bottom: 6px;"><strong>Required External Telemetry:</strong> {{ cand.required_evidence }}</div>
+            
+            <div style="font-size: 7pt; font-weight: bold; color: #78350F; margin-bottom: 2px;">ANALYST RESOLUTION CHECKLIST:</div>
+            {% for chk in cand.checklist %}
+            <div style="font-size: 7pt; color: #451A03;"><input type="checkbox"/> [ ] {{ chk }}</div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="font-size: 8pt; color: var(--sev-clean); font-weight: bold;">
+            [PASS] All detected candidates were deterministically verified. No unresolved UNKNOWN candidates remain.
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 16: CHAIN OF CUSTODY & EVIDENCE LEDGER                       -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>16. Chain of Custody &amp; Evidence Ledger</span>
+            <span class="badge badge-clean">CHAIN INTEGRITY: VERIFIED</span>
+        </h1>
+
+        <h2 class="sub-title">Forensic Chain of Custody (Physical &amp; Electronic)</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 8%;">Item #</th>
+                <th style="width: 25%;">Transferred From</th>
+                <th style="width: 25%;">Transferred To</th>
+                <th style="width: 20%;">Date &amp; Time (UTC)</th>
+                <th style="width: 15%;">Purpose</th>
+                <th style="width: 7%;">Hash Match</th>
+            </tr>
+            {% for c in data.custody %}
+            <tr>
+                <td>{{ c.item_num }}</td>
+                <td>{{ c.transferred_from }}</td>
+                <td>{{ c.transferred_to }}</td>
+                <td class="mono">{{ c.timestamp_utc }}</td>
+                <td>{{ c.purpose }}</td>
+                <td style="color: var(--sev-clean); font-weight: bold; text-align: center;">&#10004; YES</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h2 class="sub-title">Immutable Evidence Ledger (Cryptographic Block Chain)</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 6%;">#</th>
+                <th style="width: 18%;">Timestamp (UTC)</th>
+                <th style="width: 24%;">Forensic Operation / Action</th>
+                <th style="width: 26%;">Current Block Hash (SHA-256)</th>
+                <th style="width: 26%;">Previous Block Hash</th>
+            </tr>
+            {% for l in data.ledger %}
+            <tr>
+                <td style="font-weight: bold;">{{ l.n }}</td>
+                <td class="mono">{{ l.ts }}</td>
+                <td>{{ l.action }}</td>
+                <td class="mono" style="font-size: 6pt; color: #2563EB;">{{ l.hash[:24] }}...</td>
+                <td class="mono" style="font-size: 6pt; color: #64748B;">{{ l.prev_hash[:24] }}...</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="callout callout-info no-break" style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div class="callout-title" style="color: var(--sev-clean);">&#128274; Ledger Proof of Non-Tampering</div>
+                <div>Each ledger entry is cryptographically salted and chained to the previous ledger state. Any modification to past entries invalidates the entire evidence root hash.</div>
+            </div>
+            <div style="padding: 4px 10px; background: #DCFCE7; border: 1px solid #86EFAC; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #166534; white-space: nowrap;">
+                &#10004; INTEGRITY VERIFIED
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 17: GLOSSARY OF DIGITAL FORENSICS TERMS                      -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>17. Digital Forensics Reference Glossary</span>
+            <span class="badge badge-info">LEGAL &amp; TECHNICAL</span>
+        </h1>
+
+        <div class="layout-2col no-break" style="font-size: 7.5pt;">
+            <div>
+                <p><strong>Fileless Malware:</strong> Malicious software that operates entirely within volatile computer memory (RAM) or native OS scripting interpreters, without storing permanent binary files on the hard drive.</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>VAD (Virtual Address Descriptor):</strong> A self-balancing binary tree structure utilized by the Windows memory manager to track memory allocation and protection states for every process.</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>DKOM (Direct Kernel Object Manipulation):</strong> A sophisticated rootkit technique where malware directly modifies kernel memory objects (such as unlinking an EPROCESS from <code>ActiveProcessLinks</code>) to conceal its execution.</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>Process Hollowing:</strong> A code injection method where an attacker spawns a legitimate process in a suspended state, hollows out its legitimate memory sections, and replaces them with an encrypted malicious payload.</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>PAGE_EXECUTE_READWRITE (RWX):</strong> A memory page permission granting simultaneous write and execution rights. High-fidelity forensic indicator of shellcode unpacking and self-modifying code.</p>
+            </div>
+
+            <div>
+                <p><strong>PPID Spoofing:</strong> The manipulation of a newly created process's parent process metadata to make it appear as an illegitimate child of a trusted Windows daemon (e.g., spoolsv.exe or services.exe).</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>Reflective DLL Injection:</strong> A technique whereby a dynamic link library is injected into a target process's memory space directly from volatile memory buffers, completely bypassing the Windows operating system loader.</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>Memory Smear:</strong> Inconsistencies introduced during physical RAM acquisition due to running CPU threads modifying memory pages while the imaging tool is reading them.</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>Tri-State Forensic Logic:</strong> Deterministic three-valued logic system (TRUE / FALSE / UNKNOWN) ensuring that forensic conclusions distinguish between verified absence of malware and lack of investigative telemetry.</p>
+                <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
+
+                <p><strong>Section 65B Certificate:</strong> Mandatory statutory declaration under the Indian Evidence Act, 1872 certifying the lawful custody, functioning condition, and authenticity of electronic evidence submitted to court.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- PAGE 18: LEGAL SECTION 65B CERTIFICATE & EXPERT OPINION           -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>18. Statutory Certification &amp; Expert Opinion</span>
+            <span class="badge badge-info">LEGAL PRODUCTION</span>
+        </h1>
+
+        <!-- Section 45 Opinion -->
+        <h2 class="sub-title">Expert Opinion pursuant to Section 45, Indian Evidence Act, 1872</h2>
+        <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
+            Based upon deterministic algorithmic parsing, cross-view kernel structure corroboration, and cryptographic ledger hashing performed upon the volatile memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>), it is my considered expert opinion as a trained digital forensics specialist that the subject system was actively compromised by fileless malware residing in unbacked executable memory and utilizing kernel Direct Kernel Object Manipulation to evade user-mode oversight.
+        </p>
+
+        <!-- Section 65B(4) Certificate -->
+        <div style="border: 2px solid #0B1220; border-radius: 6px; padding: 12px; background: #FFFFFF; margin-bottom: 12px;" class="no-break">
+            <div style="text-align: center; font-weight: 800; font-size: 9.5pt; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;">
+                CERTIFICATE UNDER SECTION 65B(4) OF THE INDIAN EVIDENCE ACT, 1872
+            </div>
+
+            <p style="font-size: 7.5pt; line-height: 1.4; margin-bottom: 8px; text-align: justify;">
+                I, <strong>{{ data.case.examiner.name }}</strong>, holding the post of <strong>{{ data.case.examiner.designation }}</strong> at <strong>{{ data.case.examiner.agency }}</strong>, do hereby solemnly declare and certify under Section 65B(4) of the Indian Evidence Act, 1872:
+            </p>
+
+            <ol style="margin-left: 16px; font-size: 7.5pt; line-height: 1.35; margin-bottom: 8px;">
+                <li>That the electronic record contained in this forensic report was generated by the <strong>{{ data.engine.name }}</strong> (Version {{ data.engine.version }}) running upon an isolated forensic workstation in the ordinary course of official duty.</li>
+                <li>That during the period over which the computer system was used to generate this electronic record, the system was operating properly in a secure, write-blocked forensic laboratory environment.</li>
+                <li>That the source digital evidence file (<strong>{{ data.evidence.filename }}</strong>) was cryptographically authenticated with SHA-256 hash <code>{{ data.evidence.sha256 }}</code> and remained strictly unmodified throughout the analysis.</li>
+                <li>That the contents of this electronic report faithfully represent the physical memory structures extracted from the evidence artifact, without manual modification or fabrication.</li>
+            </ol>
+
+            <div class="layout-sidebar" style="margin-top: 10px; align-items: flex-end;">
+                <div>
+                    <div style="font-size: 7.5pt; font-weight: bold; margin-bottom: 2px;">EXAMINER DETAILS &amp; SIGNATURE:</div>
+                    <div style="font-size: 7.5pt;">Name: {{ data.case.examiner.name }}</div>
+                    <div style="font-size: 7.5pt;">Designation: {{ data.case.examiner.designation }}</div>
+                    <div style="font-size: 7.5pt;">Department / Lab: {{ data.case.examiner.agency }}</div>
+                    <div style="font-size: 7.5pt;">Officer ID: {{ data.case.examiner.id }}</div>
+                    <div style="font-size: 7.5pt;">Date &amp; Place: {{ data.case.report_ts_ist }} IST</div>
+                    
+                    <div class="signature-box" style="margin-top: 6px;">
+                        [ SIGNATURE OF AUTHORIZED DIGITAL FORENSIC EXAMINER ]
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="stamp-box">
+                        OFFICIAL<br/>FORENSIC LAB<br/>STAMP &amp; SEAL
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

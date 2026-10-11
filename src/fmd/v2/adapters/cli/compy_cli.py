@@ -12,13 +12,15 @@ from fmd.v2.application.use_cases import AnalyzeMemoryUseCase, AnalyzeMemoryRequ
 from fmd.v2.application.coordinator import SessionCoordinator
 from fmd.v2.adapters.providers.mock_collector import MockCollector
 from fmd.v2.adapters.providers.mock_detector import MockStructuralDetector
+from fmd.v2.adapters.providers.process_tree_detector import ProcessTreeAnomalyDetector
+from fmd.v2.adapters.providers.hidden_process_detector import HiddenProcessDetector
 from fmd.v2.domain.evidence.ledger import EvidenceLedger
 from fmd.v2.domain.reasoning.corroboration import DeterministicCorroborator
 from fmd.v2.domain.reasoning.verification import StrictVerifier
 from fmd.v2.domain.governance.gate import CLIGovernanceGate
 
 def build_v2_app() -> AnalyzeMemoryUseCase:
-    """Dependency Injection root for Phase 1."""
+    """Dependency Injection root for Phase 1 & 2."""
     
     def coordinator_factory() -> SessionCoordinator:
         # 1. State
@@ -26,7 +28,11 @@ def build_v2_app() -> AnalyzeMemoryUseCase:
         
         # 2. Providers
         collector = MockCollector()
-        detectors = [MockStructuralDetector()]
+        detectors = [
+            MockStructuralDetector(),
+            ProcessTreeAnomalyDetector(),
+            HiddenProcessDetector()
+        ]
         
         # 3. Domain Logic
         corroborator = DeterministicCorroborator()

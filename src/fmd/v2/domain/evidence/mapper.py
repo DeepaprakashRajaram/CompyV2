@@ -33,12 +33,18 @@ class EvidenceMapper:
                 ppid = p.get("ppid")
                 create_time = p.get("create_time")
                 exit_time = p.get("exit_time")
+                is_hidden = p.get("is_hidden", False)
+                threads = p.get("threads", 0)
+                handles = p.get("handles", 0)
             else:
                 pid = p.pid
                 name = p.image_file_name
                 ppid = p.ppid
                 create_time = getattr(p, "create_time", None)
                 exit_time = getattr(p, "exit_time", None)
+                is_hidden = getattr(p, "is_hidden", False)
+                threads = getattr(p, "threads", 0)
+                handles = getattr(p, "handles", 0)
                 
             # Evidence Identity (Canonical Facts): uuid5(NAMESPACE_URL, artifact_identity + stable_forensic_properties)
             stable_prop = f"{provenance.artifact_identity}-PID-{pid}"
@@ -50,7 +56,10 @@ class EvidenceMapper:
                 name=name,
                 ppid=ppid,
                 create_time=create_time,
-                exit_time=exit_time
+                exit_time=exit_time,
+                is_hidden=is_hidden,
+                threads=threads,
+                handles=handles
             )
             self.ledger.append_node(node, provenance)
 

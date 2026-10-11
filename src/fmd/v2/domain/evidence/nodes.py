@@ -21,6 +21,9 @@ class ProcessNode(IEvidenceNode):
     ppid: Optional[int] = None
     create_time: Optional[datetime] = None
     exit_time: Optional[datetime] = None
+    is_hidden: bool = False
+    threads: int = 0
+    handles: int = 0
     
     @property
     def id(self) -> EvidenceId:

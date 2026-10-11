@@ -12,3 +12,4 @@ class ProcessDTO:
     exit_time: Optional[datetime] = None
     threads: int = 0
     handles: int = 0
+    is_hidden: bool = False

@@ -75,6 +75,7 @@ class CapabilityStatus(Enum):
 
 class ProviderCapability(Enum):
     PROCESS_LIST = "PROCESS_LIST"
+    PROCESS_SCAN = "PROCESS_SCAN"
     VAD_INFO = "VAD_INFO"
     MEMORY_CONTENT = "MEMORY_CONTENT"
     HANDLES = "HANDLES"

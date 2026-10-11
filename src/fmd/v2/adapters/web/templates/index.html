@@ -38,7 +38,12 @@
             <i class="fa-solid fa-shield-halved text-4xl text-blue-500"></i>
         </div>
         <h1 class="text-4xl font-bold mb-2 tracking-tight">Compy V2 Forensic Engine</h1>
-        <p class="text-gray-400 text-lg">Automated Fileless Malware Detection & Section 65B Report Generation</p>
+        <p class="text-gray-400 text-lg mb-3">Automated Fileless Malware Detection & Section 65B Report Generation</p>
+        <a href="/report/sample" target="_blank" class="inline-flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-700 hover:bg-cyan-900 transition-colors">
+            <i class="fa-solid fa-file-contract"></i>
+            <span>Preview Mandiant/CrowdStrike-tier 19-Page Sample DFIR Report</span>
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+        </a>
     </div>
 
     <!-- Main Card -->
@@ -87,25 +92,47 @@
             <h2 class="text-3xl font-bold mb-2">Analysis Complete</h2>
             <p id="result-text" class="text-xl mb-8">System Status: Unknown</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-4">
                 <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
                     <p class="text-gray-400 text-sm mb-1">Investigation ID</p>
                     <p id="res-inv-id" class="font-mono text-sm text-white break-all">-</p>
                 </div>
                 <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
                     <p class="text-gray-400 text-sm mb-1">Compliance Standard</p>
-                    <p class="font-semibold text-green-400"><i class="fa-solid fa-check-circle mr-1"></i> Section 65B IEA</p>
+                    <p class="font-semibold text-green-400"><i class="fa-solid fa-check-circle mr-1"></i> Section 65B IEA / CERT-In</p>
                 </div>
             </div>
 
-            <div class="flex space-x-4 w-full">
-                <a id="download-pdf-btn" href="#" class="w-1/2 text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105">
+            <!-- Forensic Indicator Badges -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
+                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs mb-1">Process Lineage (PPID)</p>
+                        <p id="res-ppid-status" class="font-semibold text-sm text-green-400">Baseline Verified</p>
+                    </div>
+                    <span id="res-ppid-badge" class="px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono">0 Anomalies</span>
+                </div>
+                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs mb-1">Rootkit DKOM (psscan vs pslist)</p>
+                        <p id="res-rootkit-status" class="font-semibold text-sm text-green-400">Zero Unlinked PIDs</p>
+                    </div>
+                    <span id="res-rootkit-badge" class="px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono">0 Hidden</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+                <a id="download-pdf-btn" href="#" class="text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
                     <i class="fa-solid fa-file-pdf"></i>
                     <span>Download PDF</span>
                 </a>
-                <a id="download-json-btn" href="#" class="w-1/2 text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105">
+                <a id="view-html-btn" href="#" target="_blank" class="text-center bg-cyan-700 hover:bg-cyan-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>View HTML Report</span>
+                </a>
+                <a id="download-json-btn" href="#" class="text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
                     <i class="fa-solid fa-code"></i>
-                    <span>Download JSON (SIEM)</span>
+                    <span>Download JSON</span>
                 </a>
             </div>
             <button onclick="resetApp()" class="mt-6 text-gray-400 hover:text-white underline">Analyze Another File</button>
@@ -225,7 +252,39 @@
                 iconContainer.innerHTML = '<i class="fa-solid fa-circle-question"></i>';
             }
             
+            const ppidCount = data.ppid_count || 0;
+            const rootkitCount = data.rootkit_count || 0;
+
+            const ppidStatus = document.getElementById('res-ppid-status');
+            const ppidBadge = document.getElementById('res-ppid-badge');
+            if (ppidCount > 0) {
+                ppidStatus.innerText = "PPID Spoofing / Exploit Spawns";
+                ppidStatus.className = "font-semibold text-sm text-red-400";
+                ppidBadge.innerText = `${ppidCount} Anomalies`;
+                ppidBadge.className = "px-2 py-1 rounded text-xs bg-red-900 text-red-300 font-mono";
+            } else {
+                ppidStatus.innerText = "Baseline Verified";
+                ppidStatus.className = "font-semibold text-sm text-green-400";
+                ppidBadge.innerText = "0 Anomalies";
+                ppidBadge.className = "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+            }
+
+            const rootkitStatus = document.getElementById('res-rootkit-status');
+            const rootkitBadge = document.getElementById('res-rootkit-badge');
+            if (rootkitCount > 0) {
+                rootkitStatus.innerText = "Unlinked DKOM Detected";
+                rootkitStatus.className = "font-semibold text-sm text-purple-400";
+                rootkitBadge.innerText = `${rootkitCount} Hidden PIDs`;
+                rootkitBadge.className = "px-2 py-1 rounded text-xs bg-purple-900 text-purple-300 font-mono";
+            } else {
+                rootkitStatus.innerText = "Zero Unlinked PIDs";
+                rootkitStatus.className = "font-semibold text-sm text-green-400";
+                rootkitBadge.innerText = "0 Hidden";
+                rootkitBadge.className = "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+            }
+
             document.getElementById('download-pdf-btn').href = `/report/download/pdf/${data.investigation_id}`;
+            document.getElementById('view-html-btn').href = `/report/view/html/${data.investigation_id}`;
             document.getElementById('download-json-btn').href = `/report/download/json/${data.investigation_id}`;
         }
     </script>
