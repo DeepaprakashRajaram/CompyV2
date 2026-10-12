@@ -1,7 +1,7 @@
 /* ==========================================================================
    Compy V2 Forensic Engine - Senior DFIR Print Design System
    Target: High-Density A4 Legal & Technical Forensic Report
-   Standard: CERT-In / Indian Evidence Act Section 45 & 65B Compliant
+   Standard: NIST SP 800-86 / DFIR Standard Compliant
    ========================================================================== */
 
 :root {
@@ -52,7 +52,7 @@
     color: #64748B;
   }
   @top-right {
-    content: "CONFIDENTIAL // LAW ENFORCEMENT & JUDICIAL PROCEEDINGS";
+    content: "CONFIDENTIAL // DIGITAL FORENSIC INVESTIGATION RECORD";
     font-family: 'Inter', -apple-system, sans-serif;
     font-size: 6.5pt;
     font-weight: 800;
@@ -544,7 +544,7 @@ table.report-table td.mono {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Legal 65B signature boxes */
+/* Examiner attestation signature boxes */
 .signature-box {
   border: 1px dashed #64748B;
   background: #F8FAFC;

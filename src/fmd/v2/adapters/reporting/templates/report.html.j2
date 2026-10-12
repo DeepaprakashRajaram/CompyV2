@@ -14,19 +14,37 @@
 </head>
 <body data-case-id="{{ data.case.id }}">
 
-    <div class="watermark">CONFIDENTIAL // LAW ENFORCEMENT &amp; JUDICIAL PROCEEDINGS ONLY</div>
+    <div class="watermark">
+        {% if data.case.is_synthetic_demo %}
+        SYNTHETIC DEMONSTRATION &mdash; NOT REAL FORENSIC EVIDENCE
+        {% else %}
+        CONFIDENTIAL // DIGITAL FORENSIC INVESTIGATION RECORD
+        {% endif %}
+    </div>
 
     <!-- ================================================================= -->
     <!-- PAGE 1: PREMIUM COVER PAGE                                        -->
     <!-- ================================================================= -->
     <div class="page cover-page">
         <div>
-            <div class="cover-header-tag">COMPY V2 FORENSIC ENGINE // DIGITAL EVIDENCE REPORT</div>
+            <div class="cover-header-tag">
+                {% if data.case.is_synthetic_demo %}
+                SYNTHETIC DEMO // NOT REAL FORENSIC EVIDENCE
+                {% else %}
+                COMPY V2 FORENSIC ENGINE // DIGITAL EVIDENCE REPORT
+                {% endif %}
+            </div>
             <h1 class="cover-title">CYBER FORENSIC ANALYSIS REPORT</h1>
             <div class="cover-subtitle">VOLATILE MEMORY FORENSICS // FILELESS MALWARE &amp; ROOTKIT AUDIT</div>
             
-            <div class="cover-banner-alert">
-                <span>&#9888; STATUTORY DECLARATION: PREPARED PURSUANT TO SECTIONS 45 &amp; 65B OF THE INDIAN EVIDENCE ACT, 1872</span>
+            <div class="cover-banner-alert" {% if data.case.is_synthetic_demo %}style="background: #FEF3C7; color: #92400E; border-color: #F59E0B;"{% endif %}>
+                {% if data.case.is_synthetic_demo %}
+                <span>&#9888; SYNTHETIC DEMONSTRATION RUN: SYNTHETIC DATA ONLY &mdash; NOT REAL FORENSIC EVIDENCE</span>
+                {% elif data.case.statutory_declaration %}
+                <span>&#9888; STATUTORY DECLARATION: {{ data.case.statutory_declaration }}</span>
+                {% else %}
+                <span>DFIR ANALYSIS REPORT &mdash; AUTOMATED VOLATILE MEMORY EXAMINATION</span>
+                {% endif %}
             </div>
 
             <div class="cover-grid">
@@ -35,7 +53,7 @@
                     <div class="cover-card-title">CASE &amp; INVESTIGATION REGISTRY</div>
                     <table class="cover-meta-table">
                         <tr><td class="label">Investigation ID:</td><td class="val">{{ data.case.id }}</td></tr>
-                        <tr><td class="label">FIR / Case Ref:</td><td class="val">{{ data.case.fir_number or 'N/A' }}</td></tr>
+                        <tr><td class="label">Reference / Case Ref:</td><td class="val">{{ data.case.fir_number or 'N/A' }}</td></tr>
                         <tr><td class="label">Investigating Agency:</td><td class="val">{{ data.case.agency }}</td></tr>
                         <tr><td class="label">Lead Examiner:</td><td class="val">{{ data.case.examiner.name }}</td></tr>
                         <tr><td class="label">Designation:</td><td class="val">{{ data.case.examiner.designation }}</td></tr>
@@ -49,20 +67,36 @@
                 <div class="cover-card" style="text-align: center;">
                     <div class="cover-card-title">FORENSIC VERDICT &amp; RISK SCORE</div>
                     <div style="margin: 6px 0;">
+                        {% set v_disp = data.summary.verdict_label or (
+                            'MALICIOUS' if data.summary.verdict == 'DETECTED' else (
+                                'NO DETECTION WITHIN EXECUTED SCOPE' if data.summary.verdict == 'NOT DETECTED' else (
+                                    'SUSPICIOUS' if data.summary.verdict == 'PARTIAL' else 'INCONCLUSIVE'
+                                )
+                            )
+                        ) %}
                         {% if data.summary.verdict == 'DETECTED' %}
-                        <span class="badge badge-detected" style="font-size: 11pt; padding: 4px 14px;">MALWARE DETECTED</span>
+                        <span class="badge badge-detected" style="font-size: 11pt; padding: 4px 14px;">{{ v_disp }}</span>
                         {% elif data.summary.verdict == 'NOT DETECTED' %}
-                        <span class="badge badge-clean" style="font-size: 11pt; padding: 4px 14px;">CLEAN / NO THREATS</span>
+                        <span class="badge badge-clean" style="font-size: 11pt; padding: 4px 14px;">{{ v_disp }}</span>
+                        {% elif data.summary.verdict == 'PARTIAL' %}
+                        <span class="badge badge-unknown" style="font-size: 11pt; padding: 4px 14px; background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B;">{{ v_disp }}</span>
                         {% else %}
-                        <span class="badge badge-unknown" style="font-size: 11pt; padding: 4px 14px;">UNKNOWN / UNRESOLVED</span>
+                        <span class="badge badge-unknown" style="font-size: 11pt; padding: 4px 14px;">{{ v_disp }}</span>
                         {% endif %}
                     </div>
                     
-                    <div style="margin: 8px auto;">
+                    <div style="margin: 6px auto;">
                         {{ risk_gauge_svg | safe }}
                     </div>
                     
-                    <div style="font-size: 7pt; color: #94A3B8; margin-top: 4px;">
+                    <div style="font-size: 7.5pt; font-weight: 700; color: #E2E8F0; margin-top: 2px;">
+                        HEURISTIC TRIAGE SCORE: {{ data.summary.risk_score }} / 100
+                    </div>
+                    <div style="font-size: 6pt; color: #94A3B8; margin-top: 1px;">
+                        (Heuristic anomaly score &mdash; not infection probability)
+                    </div>
+                    
+                    <div style="font-size: 6.5pt; color: #64748B; margin-top: 4px;">
                         Engine: {{ data.engine.name }} {{ data.engine.version }} ({{ data.engine.build }})
                     </div>
                 </div>
@@ -72,10 +106,17 @@
             <div class="cover-card" style="margin-bottom: 16px;">
                 <div class="cover-card-title">DIGITAL EVIDENCE IDENTIFICATION &amp; HASH VERIFICATION</div>
                 <table class="cover-meta-table">
-                    <tr><td class="label">Source Image File:</td><td class="val">{{ data.evidence.filename }} ({{ data.evidence.size }})</td></tr>
+                    <tr><td class="label">Source Artifact:</td><td class="val">{{ data.evidence.filename }} ({{ data.evidence.size }})</td></tr>
+                    {% if data.evidence.filepath and data.evidence.filepath != data.evidence.filename %}
+                    <tr><td class="label">Available Path:</td><td class="val" style="font-size: 7pt; font-family: 'JetBrains Mono', monospace;">{{ data.evidence.filepath }}</td></tr>
+                    {% endif %}
+                    <tr><td class="label">Detected Type:</td><td class="val"><strong>{{ data.evidence.detected_type or 'Volatile Memory Image (Raw RAM)' }}</strong></td></tr>
                     <tr><td class="label">SHA-256 Hash:</td><td class="val" style="color: #22D3EE;">{{ data.evidence.sha256 }}</td></tr>
+                    {% if data.evidence.sha1 %}
+                    <tr><td class="label">SHA-1 Hash:</td><td class="val" style="color: #94A3B8;">{{ data.evidence.sha1 }}</td></tr>
+                    {% endif %}
                     <tr><td class="label">MD5 Hash:</td><td class="val">{{ data.evidence.md5 }}</td></tr>
-                    <tr><td class="label">Target OS Profile:</td><td class="val">{{ data.evidence.os }} (Arch: {{ data.evidence.arch }})</td></tr>
+                    <tr><td class="label">Format Validation:</td><td class="val">{{ data.evidence.format_validation or 'Validated Memory Image' }}</td></tr>
                 </table>
             </div>
         </div>
@@ -90,7 +131,7 @@
             </div>
             <div style="text-align: right;">
                 <div style="font-weight: 800; color: #E2E8F0;">{{ data.case.examiner.agency }}</div>
-                <div>GOVERNMENT OF INDIA // DIGITAL FORENSICS DIVISION</div>
+                <div>{% if data.case.department %}{{ data.case.department }}{% else %}DFIR INVESTIGATION DIVISION{% endif %}</div>
             </div>
         </div>
     </div>
@@ -110,29 +151,41 @@
                 <table class="report-table">
                     <tr><th>Attribute</th><th>Specification</th></tr>
                     <tr><td>Document Title</td><td>Cyber Forensic Analysis Report - Memory Forensics</td></tr>
-                    <tr><td>Document Version</td><td>2.0 (Official Court Production)</td></tr>
+                    <tr><td>Document Version</td><td>2.0 ({% if data.case.is_synthetic_demo %}Synthetic Demonstration{% elif data.case.document_purpose %}{{ data.case.document_purpose }}{% else %}Automated Analysis Report{% endif %})</td></tr>
                     <tr><td>Security Classification</td><td>{{ data.case.classification }}</td></tr>
-                    <tr><td>Handling Caveat</td><td>TLP:AMBER+STRICT (Law Enforcement Need-to-Know)</td></tr>
+                    <tr><td>Handling Caveat</td><td>{% if data.case.handling_caveat %}{{ data.case.handling_caveat }}{% else %}CONFIDENTIAL &mdash; INTERNAL USE ONLY{% endif %}</td></tr>
                     <tr><td>Cryptographic Binding</td><td class="mono">Ledger Run ID + Artifact SHA-256</td></tr>
                 </table>
             </div>
 
             <div>
-                <h2 class="sub-title">Authorized Distribution Registry</h2>
+                <h2 class="sub-title">Execution &amp; Handling Registry</h2>
                 <table class="report-table">
-                    <tr><th>Recipient / Agency</th><th>Capacity</th><th>Dispatch Mode</th></tr>
-                    <tr><td>Hon'ble Designated Court</td><td>Judicial Record</td><td>Sealed Production / Sec 65B</td></tr>
-                    <tr><td>Investigating Officer (IO)</td><td>Case Diary</td><td>Encrypted FSL Channel</td></tr>
-                    <tr><td>Superintendent of Police / Cyber</td><td>Supervisory</td><td>Secure Repository</td></tr>
-                    <tr><td>FSL Archive Reference</td><td>Master Evidence</td><td>Air-Gapped Cold Storage</td></tr>
+                    <tr><th>Entity / Recipient</th><th>Role</th><th>Status / Purpose</th></tr>
+                    {% if data.case.distribution %}
+                    {% for dist in data.case.distribution %}
+                    <tr><td>{{ dist.recipient }}</td><td>{{ dist.role }}</td><td>{{ dist.purpose }}</td></tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr><td>Automated Pipeline</td><td>Analysis Engine</td><td>Memory Examination Completed</td></tr>
+                    <tr><td>Forensic Examiner</td><td>Reviewer</td><td>Findings Review &amp; Triage</td></tr>
+                    <tr><td>Incident Response</td><td>Custodian</td><td>Evidence Preservation</td></tr>
+                    {% endif %}
                 </table>
             </div>
         </div>
 
-        <div class="callout callout-info no-break">
-            <div class="callout-title">&#128737; Statutory Admissibility Notice</div>
-            This document contains opinions and observations formed by a qualified technical examiner under Section 45 of the Indian Evidence Act, 1872. The computer outputs and hash chains herein are certified under Section 65B(4) of the Indian Evidence Act, 1872, rendering them primary electronic documentary evidence.
+        {% if data.case.is_synthetic_demo %}
+        <div class="callout callout-warning no-break" style="background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+            <div class="callout-title">&#9888; Demonstration Notice &mdash; Synthetic Fixture Data</div>
+            This document was generated using synthetic demonstration fixtures. It does not reflect analysis of a physical memory image and does not represent real expert testimony, statutory certification, or judicial evidence.
         </div>
+        {% else %}
+        <div class="callout callout-info no-break">
+            <div class="callout-title">&#128737; Technical Examination Notice</div>
+            This document presents algorithmic analysis performed by automated forensic inspection software over volatile memory evidence. It provides technical findings to assist qualified forensic examiners; formal certification under Section 65B(4) or Section 45 requires independent validation and execution by an authorized investigating officer.
+        </div>
+        {% endif %}
 
         <h2 class="sub-title" style="margin-top: 14px;">Index of Sections</h2>
         <ul class="toc-list no-break">
@@ -151,9 +204,9 @@
             <li class="toc-item"><span class="title">13. Forensic Risk Scoring &amp; Mathematical Weighting Model</span><span class="page-num">Page 14</span></li>
             <li class="toc-item"><span class="title">14. Remediation Action Plan &amp; Incident Containment</span><span class="page-num">Page 14</span></li>
             <li class="toc-item"><span class="title">15. Limitations, Smear Constraints &amp; Candidate Worksheet</span><span class="page-num">Page 15</span></li>
-            <li class="toc-item"><span class="title">16. Chain of Custody &amp; Immutable Evidence Ledger</span><span class="page-num">Page 16</span></li>
+            <li class="toc-item"><span class="title">16. Pipeline Custody &amp; Report Integrity Seal</span><span class="page-num">Page 16</span></li>
             <li class="toc-item"><span class="title">17. Technical Glossary of Digital Forensics Terms</span><span class="page-num">Page 17</span></li>
-            <li class="toc-item"><span class="title">18. Certificate under Section 65B(4) &amp; Section 45 Opinion</span><span class="page-num">Page 18</span></li>
+            <li class="toc-item"><span class="title">18. Technical Assessment &amp; Evidentiary Findings Declaration</span><span class="page-num">Page 18</span></li>
         </ul>
     </div>
 
@@ -163,14 +216,14 @@
     <div class="page">
         <h1 class="section-title">
             <span>3. Executive Summary</span>
-            <span class="badge {% if data.summary.verdict == 'DETECTED' %}badge-critical{% else %}badge-clean{% endif %}">{{ data.summary.verdict }}</span>
+            <span class="badge {% if data.summary.verdict_label == 'MALICIOUS' or data.summary.verdict == 'DETECTED' %}badge-critical{% elif data.summary.verdict_label == 'SUSPICIOUS' %}badge-high{% elif data.summary.verdict_label == 'NO DETECTION WITHIN EXECUTED SCOPE' or data.summary.verdict == 'NOT DETECTED' %}badge-clean{% else %}badge-unknown{% endif %}">{{ data.summary.verdict_label or data.summary.verdict }}</span>
         </h1>
 
         <!-- KPI Row -->
         <div class="kpi-row no-break">
             <div class="kpi-card">
                 <div class="kpi-num" style="color: var(--sev-critical);">{{ data.summary.risk_score }} / 100</div>
-                <div class="kpi-label">Forensic Risk Index</div>
+                <div class="kpi-label">{{ data.summary.risk_score_label or 'Heuristic Triage Score (not infection probability)' }}</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-num" style="color: #0F172A;">{{ data.findings | length }}</div>
@@ -190,8 +243,40 @@
             <div>
                 <h2 class="sub-title">Incident Synopsis &amp; Operational Verdict</h2>
                 <p style="margin-bottom: 8px;">
-                    Digital forensic examination of the volatile memory dump (<strong>{{ data.evidence.filename }}</strong>) conclusively demonstrates that the subject host was subjected to an advanced in-memory fileless cyber attack. The intrusion bypassed traditional disk-based antivirus solutions by injecting payload logic directly into legitimate system memory spaces, altering process ancestry, and utilizing kernel manipulation to evade detection.
+                    {% if data.case.is_synthetic_demo %}
+                    <strong>[SYNTHETIC DEMONSTRATION]</strong> This section reflects synthetic simulation data generated for workflow demonstration. The simulated pipeline registered verdict: <code>{{ data.summary.verdict_label or data.summary.verdict }}</code>.
+                    {% elif data.summary.verdict == 'DETECTED' %}
+                    Digital forensic examination of the digital artifact (<strong>{{ data.evidence.filename }}</strong>) identified anomalous artifacts indicating in-memory execution, process masquerading, or evasion techniques within the executed capability scope ({{ data.coverage.modules_run }} module(s) evaluated). Supported findings include anomalous process lineage, cross-view discrepancies, or signature indicators documented herein.
+                    {% elif data.summary.verdict == 'NOT DETECTED' %}
+                    Digital forensic examination of the digital artifact (<strong>{{ data.evidence.filename }}</strong>) produced no malicious detections across the {{ data.coverage.modules_run }} module(s) executed. Evaluated kernel structures and process hierarchies exhibited expected baselines. This finding applies solely to executed capability checks and does not constitute a universal clean determination.
+                    {% elif data.summary.verdict in ['UNKNOWN', 'INCONCLUSIVE'] %}
+                    Digital forensic examination of the digital artifact (<strong>{{ data.evidence.filename }}</strong>) yielded an inconclusive result (verdict: <code>{{ data.summary.verdict_label or data.summary.verdict }}</code>). Telemetry and symbols were insufficient to verify or refute in-memory anomalies. Further analysis is required.
+                    {% elif data.summary.verdict == 'PARTIAL' %}
+                    Digital forensic examination of the digital artifact (<strong>{{ data.evidence.filename }}</strong>) was only partially completed ({{ data.coverage.modules_run }} module(s) evaluated). Unexecuted capabilities prevent an overall determination.
+                    {% elif data.summary.verdict in ['FAILED', 'UNAVAILABLE'] %}
+                    Digital forensic examination of digital artifact (<strong>{{ data.evidence.filename }}</strong>) could not be completed due to operational failure or unavailable capability providers.
+                    {% else %}
+                    Digital forensic examination of digital artifact (<strong>{{ data.evidence.filename }}</strong>) produced status <code>{{ data.summary.verdict_label or data.summary.verdict }}</code>.
+                    {% endif %}
                 </p>
+
+                {% if data.summary.incomplete_coverage_summary %}
+                <div class="callout callout-warning no-break" style="margin-top: 6px; margin-bottom: 8px; padding: 6px 8px;">
+                    <div class="callout-title" style="font-size: 7.5pt;">&#9888; Analytical Scope &amp; Coverage Summary</div>
+                    <div style="font-size: 7pt; line-height: 1.35;">
+                        <div><strong>Completed Capabilities:</strong> <span style="color: #1E3A8A;">{{ data.summary.incomplete_coverage_summary.completed_methods | join(', ') }}</span></div>
+                        {% if data.summary.incomplete_coverage_summary.unexecuted_modules %}
+                        <div><strong>Unexecuted Modules:</strong> <span style="color: #92400E;">{{ data.summary.incomplete_coverage_summary.unexecuted_modules | join(', ') }}</span> (Not evaluated in this scan)</div>
+                        {% endif %}
+                        {% if data.summary.incomplete_coverage_summary.unavailable_modules %}
+                        <div><strong>Unavailable Modules:</strong> <span style="color: #DC2626;">{{ data.summary.incomplete_coverage_summary.unavailable_modules | join(', ') }}</span></div>
+                        {% endif %}
+                        <div style="color: #64748B; font-style: italic; margin-top: 2px;">
+                            Zero detections within executed capabilities confirms absence of anomalies solely within evaluated modules; unexecuted attack surfaces remain unassessed.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <h3 class="micro-title">Key Investigative Findings</h3>
                 <ul style="margin-left: 14px; margin-bottom: 10px;">
@@ -202,7 +287,17 @@
 
                 <h3 class="micro-title">Judicial &amp; Business Impact Assessment</h3>
                 <p style="font-size: 8pt; color: #334155;">
-                    {{ data.summary.business_impact or 'Active execution of unauthorized remote administrative tooling within system memory represents a complete compromise of host confidentiality and integrity. Memory artifacts demonstrate capability for credential harvesting, persistence establishment, and command-and-control communication.' }}
+                    {% if data.summary.business_impact %}
+                    {{ data.summary.business_impact }}
+                    {% elif data.summary.verdict == 'DETECTED' %}
+                    Identified memory anomalies indicate potential compromise of host processes or execution integrity within the examined scope. Further investigation and containment are advised.
+                    {% elif data.summary.verdict == 'NOT DETECTED' %}
+                    No indicators of compromise were observed within the scope of executed detection capabilities. Unexecuted system areas remain unassessed.
+                    {% elif data.summary.verdict == 'PARTIAL' %}
+                    Analysis completed with partial capability coverage; impact cannot be conclusively assessed across unexecuted modules.
+                    {% else %}
+                    Forensic analysis of the current artifact was inconclusive or produced insufficient evidence to establish compromise.
+                    {% endif %}
                 </p>
             </div>
 
@@ -247,21 +342,37 @@
 
         <h2 class="sub-title">Investigative Scope &amp; Mandate</h2>
         <p style="margin-bottom: 10px;">
-            The scope of this digital forensic audit is strictly limited to the extraction, structural parsing, and deterministic reasoning over volatile RAM captured from the compromised endpoint. The investigation sought to answer: (1) Did malicious executable code reside purely in volatile memory? (2) Were legitimate system processes hijacked or hollowed? (3) Were kernel rootkit techniques employed to conceal malicious processes from user-mode monitors?
+            The scope of this digital forensic audit is strictly limited to the extraction, structural parsing, and deterministic reasoning over volatile RAM captured from the target endpoint memory artifact. The investigation sought to answer: (1) Did malicious executable code reside purely in volatile memory? (2) Were legitimate system processes hijacked or hollowed? (3) Were kernel rootkit techniques employed to conceal malicious processes from user-mode monitors?
         </p>
 
         <h2 class="sub-title">Primary Forensic Evidence Specifications</h2>
         <table class="report-table no-break">
             <tr><th style="width: 28%;">Parameter</th><th>Verified Forensic Value</th></tr>
-            <tr><td>Evidence Label</td><td>Item #1 (Physical RAM Snapshot)</td></tr>
+            <tr><td>Evidence Label</td><td>Item #1 ({{ data.evidence.detected_type or 'Digital Forensic Evidence' }})</td></tr>
             <tr><td>Source Image File Name</td><td class="mono">{{ data.evidence.filename }}</td></tr>
-            <tr><td>Image Physical File Size</td><td>{{ data.evidence.size }}</td></tr>
+            <tr><td>Physical File Size</td><td>{{ data.evidence.size }}</td></tr>
             <tr><td>SHA-256 Checksum</td><td class="mono" style="color: #2563EB; font-weight: 700;">{{ data.evidence.sha256 }}</td></tr>
+            <tr><td>SHA-1 Checksum</td><td class="mono">{{ data.evidence.sha1 or 'N/A' }}</td></tr>
             <tr><td>MD5 Checksum</td><td class="mono">{{ data.evidence.md5 }}</td></tr>
+            <tr><td>Detected Artifact Type</td><td><strong>{{ data.evidence.detected_type or 'Volatile Memory Image' }}</strong></td></tr>
             <tr><td>Acquisition Tool / Mode</td><td>{{ data.evidence.source }}</td></tr>
             <tr><td>Target System Architecture</td><td>{{ data.evidence.arch }} ({{ data.evidence.os }})</td></tr>
             <tr><td>Target Kernel Profile</td><td class="mono">{{ data.evidence.profile or 'Windows 11 x64 23H2 (ISF Deterministic)' }}</td></tr>
             <tr><td>Acquisition Timestamp</td><td>{{ data.evidence.dump_ts }} UTC</td></tr>
+        </table>
+
+        <!-- Dedicated Static Analysis and File Properties Table -->
+        {% set sa = data.static_analysis if (data.static_analysis is defined and data.static_analysis) else {} %}
+        {% set ev = data.evidence if (data.evidence is defined and data.evidence) else {} %}
+        <h2 class="sub-title" style="margin-top: 10px;">File Properties &amp; Static Analysis Validation</h2>
+        <table class="report-table no-break">
+            <tr><th style="width: 28%;">Property</th><th>Observed Technical Metric</th></tr>
+            <tr><td>Magic Bytes (Signature)</td><td class="mono">{{ sa.magic_bytes or ev.magic_bytes or 'N/A' }}</td></tr>
+            <tr><td>MIME Type Classification</td><td class="mono">{{ sa.mime_type or ev.mime_type or 'N/A' }}</td></tr>
+            <tr><td>Format Structural Validation</td><td><span class="badge badge-clean">{{ sa.format_validation or ev.format_validation or 'VALID' }}</span></td></tr>
+            <tr><td>Extracted Indicator Strings</td><td>{{ sa.embedded_strings_count if sa.embedded_strings_count is defined else '0' }} unique string pattern(s) indexed</td></tr>
+            <tr><td>Section &amp; Entropy Assessment</td><td>{{ sa.sections_and_entropy or 'N/A' }}</td></tr>
+            <tr><td>Static Analysis Scope Notes</td><td style="font-size: 7pt; color: #475569;">{{ sa.notes or 'Structural inspection performed.' }}</td></tr>
         </table>
 
         <h2 class="sub-title">Forensic Engine Scan Coverage &amp; Metric Telemetry</h2>
@@ -310,7 +421,7 @@
             <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">3. PARSE</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Hexagonal VAD</div></div>
             <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">4. DETECT</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Multi-Rule</div></div>
             <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">5. CORRELATE</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Tri-State Logic</div></div>
-            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">6. REPORT</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">Sec 65B PDF</div></div>
+            <div class="kpi-card" style="padding: 6px;"><div class="kpi-label">6. REPORT</div><div style="font-size: 7.5pt; font-weight: bold; margin-top: 2px;">DFIR PDF</div></div>
         </div>
 
         <h2 class="sub-title">Forensic Detection Modules Deployed</h2>
@@ -343,6 +454,11 @@
             <div class="callout-title">&#9432; Tri-State Logic Invariant: Semantics of UNKNOWN</div>
             In strict digital forensics, a negative finding does not automatically mean "Clean". When a detector reports <strong>UNKNOWN</strong>, it explicitly signifies that localized symbols, telemetry hooks, or execution context were insufficient to prove or disprove the hypothesis. Such findings are never discarded as benign; they are routed to the <em>Candidate Verification Worksheet</em> for human analyst review.
         </div>
+
+        <div class="callout callout-info no-break" style="margin-top: 8px;">
+            <div class="callout-title">&#129302; Machine Learning Classification: NOT CONFIGURED / NOT IMPLEMENTED</div>
+            Machine learning threat scoring is explicitly <strong>NOT CONFIGURED / NOT IMPLEMENTED</strong> in Compy V2. COMPY relies strictly on deterministic, evidence-backed forensic heuristics, kernel structure corroboration, and YARA signature patterns. Heuristic triage scores reflect structural anomaly indices rather than probabilistic inferences or black-box model predictions.
+        </div>
     </div>
 
     <!-- ================================================================= -->
@@ -355,7 +471,7 @@
         </h1>
 
         <p style="margin-bottom: 10px;">
-            The table below provides a forensic index of all confirmed anomalies discovered in system memory. Findings are prioritized by composite threat score, reflecting their severity, confidence level, execution privilege, and stealth mechanisms.
+            The table below provides a forensic index of all confirmed anomalies discovered in system memory. Findings are prioritized by composite threat score, reflecting their severity, heuristic triage score, execution privilege, and stealth mechanisms.
         </p>
 
         <table class="report-table no-break">
@@ -363,7 +479,7 @@
                 <th style="width: 10%;">Finding ID</th>
                 <th style="width: 32%;">Threat Title &amp; Description</th>
                 <th style="width: 10%;">Severity</th>
-                <th style="width: 8%;">Conf.</th>
+                <th style="width: 8%;">Triage Score</th>
                 <th style="width: 15%;">MITRE ATT&amp;CK</th>
                 <th style="width: 15%;">Impacted Process</th>
                 <th style="width: 10%;">Verdict</th>
@@ -381,7 +497,7 @@
                     {% elif f.severity == 'MEDIUM' %}<span class="badge badge-medium">MEDIUM</span>
                     {% else %}<span class="badge badge-low">LOW</span>{% endif %}
                 </td>
-                <td class="mono">{{ (f.confidence * 100) | int }}%</td>
+                <td class="mono">{{ "%.2f"|format(f.confidence) }}</td>
                 <td>
                     {% for m in f.mitre %}
                     <span class="pill pill-mitre">{{ m }}</span>
@@ -393,24 +509,68 @@
             {% endfor %}
         </table>
 
+        {% if data.summary.verdict == 'DETECTED' %}
         <div class="callout callout-danger no-break">
             <div class="callout-title">&#9888; Composite Threat Assessment</div>
-            Multiple independent indicators confirm an active, coordinated compromise. Memory artifacts reflect simultaneous exploitation across user-mode and kernel-mode layers, utilizing reflective injection to execute unsigned binaries while manipulating kernel linked-lists to hide from operating system telemetry.
+            Corroborated findings confirm the presence of structural anomalies within the examined scope. Memory artifacts reflect indicators requiring immediate isolation and detailed forensic analysis.
         </div>
+        {% elif data.summary.verdict == 'NOT DETECTED' %}
+        <div class="callout callout-info no-break" style="background: #F0FDF4; border-color: #22C55E; color: #15803D;">
+            <div class="callout-title" style="color: #15803D;">&#10004; Composite Assessment &mdash; Clean Within Scope</div>
+            No corroborated malware anomalies were detected within the executed detection modules. Note that unexamined areas (such as unexecuted hook or driver modules) were not evaluated and cannot be asserted clean.
+        </div>
+        {% elif data.summary.verdict == 'PARTIAL' %}
+        <div class="callout callout-warning no-break" style="background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+            <div class="callout-title" style="color: #92400E;">&#9888; Composite Assessment &mdash; Partial Coverage</div>
+            Analysis completed with partial capability coverage. One or more required analytical views were unavailable. No conclusive assessment can be drawn regarding unexamined modules.
+        </div>
+        {% else %}
+        <div class="callout callout-warning no-break" style="background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+            <div class="callout-title" style="color: #92400E;">&#9888; Composite Assessment &mdash; Inconclusive / Insufficient Evidence</div>
+            Analysis could not establish a definitive threat assessment. Requisite evidence, symbol resolution, or corroborated observations were insufficient to form a conclusive determination.
+        </div>
+        {% endif %}
     </div>
 
     <!-- ================================================================= -->
-    <!-- PAGE 7: PROCESS TREE ANALYSIS                                     -->
+    <!-- PAGE 7 & 8: MEMORY FORENSICS APPENDIX (PROCESS TREE & ROOTKITS)    -->
     <!-- ================================================================= -->
+    {% if data.evidence.is_memory_image %}
     <div class="page">
         <h1 class="section-title">
             <span>7. Process Lineage &amp; PPID Spoofing Analysis</span>
-            <span class="badge badge-high">{{ data.ppid_anomalies | length }} ANOMALIES</span>
+            {% if data.ppid_anomalies | length > 0 %}
+            <span class="badge badge-high">{{ data.ppid_anomalies | length }} ANOMALIES DETECTED</span>
+            {% else %}
+            <span class="badge badge-clean">0 ANOMALIES DETECTED</span>
+            {% endif %}
         </h1>
 
         <p style="margin-bottom: 8px;">
             Windows processes follow immutable parent-child hierarchy baselines. Advanced fileless malware exploits the Windows API (e.g., <code>UpdateProcThreadAttribute</code> with <code>PROC_THREAD_ATTRIBUTE_PARENT_PROCESS</code>) to spoof its parent process ID, making a malicious payload appear as if it was legitimately launched by a trusted service.
         </p>
+
+        <!-- Compact Process Summary Table -->
+        {% if data.process_summary %}
+        <div class="kpi-row no-break" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 8px;">
+            <div class="kpi-card" style="padding: 5px;">
+                <div class="kpi-num" style="font-size: 13pt; color: #2563EB;">{{ data.process_summary.total_processes }}</div>
+                <div class="kpi-label">Audited Processes</div>
+            </div>
+            <div class="kpi-card" style="padding: 5px;">
+                <div class="kpi-num" style="font-size: 13pt; color: var(--sev-critical);">{{ data.process_summary.anomalous_processes }}</div>
+                <div class="kpi-label">Anomalous Processes</div>
+            </div>
+            <div class="kpi-card" style="padding: 5px;">
+                <div class="kpi-num" style="font-size: 13pt; color: var(--sev-clean);">{{ data.process_summary.clean_processes }}</div>
+                <div class="kpi-label">Verified Baselines</div>
+            </div>
+            <div class="kpi-card" style="padding: 5px;">
+                <div class="kpi-num" style="font-size: 13pt; color: #475569;">{{ data.process_summary.system_daemons }}</div>
+                <div class="kpi-label">System Daemons</div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Process Tree SVG Diagram -->
         <div class="no-break" style="margin-bottom: 12px; border: 1px solid #1E293B; border-radius: 6px; overflow: hidden;">
@@ -435,21 +595,37 @@
                 <td><span class="badge badge-critical">{{ a.severity }}</span></td>
             </tr>
             {% endfor %}
+            {% if not data.ppid_anomalies %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--sev-clean); font-weight: bold; padding: 10px;">
+                    &#10004; Zero process hierarchy anomalies detected within examined execution ancestry.
+                </td>
+            </tr>
+            {% endif %}
         </table>
 
+        {% if data.ppid_anomalies %}
         <div class="callout callout-warning no-break">
             <div class="callout-title">&#128269; Forensic Analysis of Observed PPID Violations</div>
-            In legitimate operating system states, <code>svchost.exe</code> is exclusively spawned by the Service Control Manager (<code>services.exe</code>, PID: {{ data.process_tree[2].pid if data.process_tree|length > 2 else 200 }}). The observation of <code>svchost.exe</code> parented by <code>explorer.exe</code> or an interactive user shell is conclusive evidence of process masquerading and PPID spoofing (MITRE T1134.004).
+            Observed parent-process relationships violate standard operating system execution baselines, indicating potential process masquerading or PPID spoofing (MITRE T1134.004).
         </div>
+        {% else %}
+        <div class="callout callout-info no-break" style="background: #F0FDF4; border-color: #22C55E; color: #15803D;">
+            <div class="callout-title" style="color: #15803D;">&#10004; Lineage Baseline Audit &mdash; No Discrepancies</div>
+            All audited processes conformed to baseline parent-child execution hierarchies within the examined scope.
+        </div>
+        {% endif %}
     </div>
 
-    <!-- ================================================================= -->
-    <!-- PAGE 8: HIDDEN PROCESS & ROOTKIT DETECTION (DKOM)                 -->
-    <!-- ================================================================= -->
+    <!-- PAGE 8: HIDDEN PROCESS & ROOTKIT DETECTION (DKOM) -->
     <div class="page">
         <h1 class="section-title">
             <span>8. Hidden Process &amp; Rootkit Detection</span>
-            <span class="badge badge-critical">{{ data.hidden_processes | length }} ROOTKITS</span>
+            {% if data.hidden_processes | length > 0 %}
+            <span class="badge badge-critical">{{ data.hidden_processes | length }} DISCREPANCIES DETECTED</span>
+            {% else %}
+            <span class="badge badge-clean">0 DISCREPANCIES</span>
+            {% endif %}
         </h1>
 
         <p style="margin-bottom: 8px;">
@@ -480,26 +656,13 @@
                 <td><span class="badge badge-critical">DKOM ROOTKIT</span></td>
             </tr>
             {% endfor %}
+            {% if not data.hidden_processes %}
             <tr>
-                <td class="mono" style="font-weight: 700; white-space: nowrap;">4</td>
-                <td class="mono">System</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td><span class="badge badge-clean">VERIFIED CLEAN</span></td>
+                <td colspan="8" style="text-align: center; color: var(--sev-clean); font-weight: bold; padding: 10px;">
+                    &#10004; Zero unlinked processes detected. Evaluated process entries match between active list and memory pool carving.
+                </td>
             </tr>
-            <tr>
-                <td class="mono" style="font-weight: 700; white-space: nowrap;">100</td>
-                <td class="mono">wininit.exe</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td class="matrix-cell-pass">&#10004; PRESENT</td>
-                <td><span class="badge badge-clean">VERIFIED CLEAN</span></td>
-            </tr>
+            {% endif %}
         </table>
 
         <h2 class="sub-title">Kernel Integrity &amp; Hooking Audits</h2>
@@ -516,6 +679,7 @@
                 <td>
                     {% if rk.verdict == 'DETECTED' %}<span class="badge badge-critical">DETECTED</span>
                     {% elif rk.verdict == 'CLEAN' or rk.verdict == 'NOT DETECTED' %}<span class="badge badge-clean">CLEAN</span>
+                    {% elif rk.verdict == 'NOT_RUN' %}<span class="badge badge-unknown">NOT RUN</span>
                     {% else %}<span class="badge badge-unknown">UNKNOWN</span>{% endif %}
                 </td>
                 <td>{{ rk.details }}</td>
@@ -524,15 +688,122 @@
             {% endfor %}
         </table>
 
+        {% if data.hidden_processes %}
         <div class="callout callout-danger no-break">
             <div class="callout-title">&#9760; Technical Analysis of Direct Kernel Object Manipulation (DKOM)</div>
-            The process <strong>{{ data.hidden_processes[0].name if data.hidden_processes else 'rootkit_stealth.exe' }}</strong> (PID: {{ data.hidden_processes[0].pid if data.hidden_processes else 6666 }}) exhibits classic DKOM behavior. The adversary directly altered the <code>Flink</code> (forward link) and <code>Blink</code> (backward link) pointers of the <code>EPROCESS.ActiveProcessLinks</code> structure. Standard Windows kernel APIs (including <code>EnumProcesses</code>, <code>CreateToolhelp32Snapshot</code>, and <code>NtQuerySystemInformation</code>) rely solely upon traversing this circular linked list; consequently, the malicious process became completely invisible to user-mode monitors and Task Manager.
+            The process <strong>{{ data.hidden_processes[0].name }}</strong> (PID: {{ data.hidden_processes[0].pid }}) exhibits unlinked DKOM execution characteristics. The process structure was carved from memory pools but was absent from the ActiveProcessLinks doubly linked list, concealing execution from user-mode monitors.
         </div>
-
+        {% else %}
         <div class="callout callout-info no-break">
-            <div class="callout-title">&#128737; Cross-View Forensic Proof of Execution</div>
-            While the process was unlinked from the high-level process list, Compy V2's deep memory pool scanner verified its physical existence by locating its uncorrupted <code>_EPROCESS</code> structure in Non-Paged Pool memory tagged with the pool identifier <code>Proc</code>. Furthermore, verification of the thread dispatcher confirmed <strong>8 scheduled execution threads</strong> running actively on the CPU at the instant of RAM acquisition. This cross-view discrepancy constitutes irrefutable forensic proof of stealth rootkit execution.
+            <div class="callout-title">&#128737; Kernel Process Consistency Verified</div>
+            Cross-referencing between active scheduling structures (<code>ActiveProcessLinks</code>) and memory pool tags confirmed zero unlinked process objects in evaluated memory.
         </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="page">
+        <h1 class="section-title">
+            <span>7. Process Lineage &amp; 8. Memory Forensics Appendix</span>
+            <span class="badge badge-info">BYPASS (STATIC FILE)</span>
+        </h1>
+        <div class="callout callout-info no-break" style="margin-top: 14px;">
+            <div class="callout-title">&#128737; Memory Forensics Appendix Bypassed for Static File</div>
+            The ingested artifact was classified as <strong>{{ data.evidence.detected_type or 'Static File / Executable' }}</strong>. Volatile physical RAM structures (ActiveProcessLinks, Virtual Address Descriptors, thread scheduler tables, and DKOM rootkit pools) are applicable solely to raw memory images. Memory forensic inspection was accordingly bypassed in favor of static structural inspection and targeted YARA pattern matching.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ================================================================= -->
+    <!-- YARA SIGNATURE RULE MATCH SUMMARY                                 -->
+    <!-- ================================================================= -->
+    <div class="page">
+        <h1 class="section-title">
+            <span>9. YARA Signature Rule Matches</span>
+            {% if data.yara_scans and data.yara_scans | length > 0 %}
+            <span class="badge badge-critical">{{ data.yara_scans | length }} SIGNATURE HITS</span>
+            {% else %}
+            <span class="badge badge-clean">0 SIGNATURE HITS</span>
+            {% endif %}
+        </h1>
+        <p style="margin-bottom: 8px;">
+            YARA multi-engine pattern scanning was executed across extracted in-memory injections, shellcode candidates, and process command lines.
+        </p>
+
+        {% if data.yara_scans %}
+        <table class="report-table no-break" style="margin-bottom: 12px;">
+            <tr>
+                <th style="width: 25%;">Rule Name</th>
+                <th style="width: 20%;">Target / Context</th>
+                <th style="width: 15%;">Target Type</th>
+                <th style="width: 20%;">Matched Strings</th>
+                <th style="width: 20%;">Severity</th>
+            </tr>
+            {% for y in data.yara_scans %}
+            <tr>
+                <td class="mono"><strong>{{ y.rule }}</strong></td>
+                <td class="mono">{{ y.target }}</td>
+                <td>{{ y.target_type }}</td>
+                <td style="text-align: center;"><span class="badge badge-high">{{ y.matched_strings_count }} string(s)</span></td>
+                <td>
+                    {% if y.severity == 'CRITICAL' %}<span class="badge badge-critical">CRITICAL</span>
+                    {% elif y.severity == 'HIGH' %}<span class="badge badge-high">HIGH</span>
+                    {% else %}<span class="badge badge-medium">{{ y.severity }}</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- Detailed Match Cards -->
+        {% for y in data.yara_scans %}
+        <div class="no-break" style="background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span class="mono" style="font-weight: 800; font-size: 8.5pt; color: #1E293B;">RULE: {{ y.rule }}</span>
+                <span class="badge {% if y.severity == 'CRITICAL' %}badge-critical{% else %}badge-high{% endif %}">{{ y.severity }}</span>
+            </div>
+            <div style="font-size: 7.5pt; margin-bottom: 6px; color: #334155;">{{ y.description }}</div>
+            
+            {% if y.matched_strings %}
+            <div class="code-title" style="margin-top: 4px;">MATCHED STRINGS &amp; HEX OFFSETS</div>
+            <table class="report-table" style="font-size: 6.5pt; margin-bottom: 6px;">
+                <tr><th style="width: 20%;">Identifier</th><th style="width: 25%;">Hex Offset</th><th>Matched Data Preview</th></tr>
+                {% for str_item in y.matched_strings %}
+                <tr>
+                    <td class="mono"><strong>{{ str_item.identifier }}</strong></td>
+                    <td class="mono" style="color: #2563EB;">{{ str_item.offset }}</td>
+                    <td class="mono" style="color: #059669; word-break: break-all;">{{ str_item.data }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 7pt; margin-top: 6px;">
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 6px; border-radius: 4px;">
+                    <strong style="color: #991B1B;">Why It Matters:</strong><br/>
+                    {{ y.why_it_matters or 'Deterministic indicator of malicious payload pattern.' }}
+                </div>
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 6px; border-radius: 4px;">
+                    <strong style="color: #475569;">Scope &amp; False Positive Considerations:</strong><br/>
+                    {{ y.false_positive_considerations or 'Administrative scripts or telemetry hooks may share common substrings.' }}
+                </div>
+            </div>
+            {% if y.engine_info %}
+            <div style="font-size: 6.5pt; color: #64748B; margin-top: 4px;">
+                Engine: {{ y.engine_info.engine }} | Ruleset: {{ y.engine_info.ruleset_version }} | Scope: {{ y.engine_info.scan_scope }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="callout callout-warning no-break" style="margin-top: 6px;">
+            <div class="callout-title">&#9888; YARA Signature Match Verification</div>
+            Matched signatures provide deterministic proof of weaponized code constructs, known download cradles, or shellcode execution sequences in active process memory.
+        </div>
+        {% else %}
+        <div class="callout callout-info no-break" style="background: #F0FDF4; border-color: #22C55E; color: #15803D; margin-top: 10px;">
+            <div class="callout-title" style="color: #15803D;">&#10004; Zero Signature Matches (Clean Within Signature Scope)</div>
+            The YARA multi-engine scanner executed across all extracted process command lines, image identities, and memory buffers. 0 signature hits were observed across active detection rulesets. This confirms the absence of known signature indicators within executed rules, distinct from an unexecuted or failed scan.
+        </div>
+        {% endif %}
     </div>
 
     <!-- ================================================================= -->
@@ -551,7 +822,7 @@
                     {% if f.severity == 'CRITICAL' %}<span class="badge badge-critical">CRITICAL</span>
                     {% elif f.severity == 'HIGH' %}<span class="badge badge-high">HIGH</span>
                     {% else %}<span class="badge badge-medium">MEDIUM</span>{% endif %}
-                    <span class="badge badge-detected">CONFIDENCE: {{ (f.confidence * 100) | int }}%</span>
+                    <span class="badge badge-detected">TRIAGE SCORE: {{ "%.2f"|format(f.confidence) }}</span>
                 </div>
             </div>
 
@@ -560,6 +831,22 @@
                     {% for m in f.mitre %}
                     <span class="pill pill-mitre">{{ m }}</span>
                     {% endfor %}
+                </div>
+
+                <!-- 7-Facet Deterministic Detection Breakdown Table -->
+                {% set de = f.detection_explanation if (f.detection_explanation is defined and f.detection_explanation) else {} %}
+                <div class="no-break" style="margin-bottom: 10px; background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 8px;">
+                    <div class="code-title" style="margin-bottom: 4px;">DETERMINISTIC 7-FACET FORENSIC EVALUATION</div>
+                    <table class="report-table" style="font-size: 7pt; margin-bottom: 0;">
+                        <tr><th style="width: 25%;">Forensic Facet</th><th>Analytical Determination</th></tr>
+                        <tr><td><strong>1. What Was Observed</strong></td><td>{{ de.what_observed or f.what_observed or f.description }}</td></tr>
+                        <tr><td><strong>2. Where Observed</strong></td><td class="mono">{{ de.where_observed or f.where_observed or (f.process.name ~ ' (PID: ' ~ f.process.pid ~ ')') }}</td></tr>
+                        <tr><td><strong>3. Detecting Heuristic / Tool</strong></td><td>{{ de.detected_by or f.detected_by or 'Compy Deterministic Forensic Engine' }}</td></tr>
+                        <tr><td><strong>4. Why It Matters</strong></td><td>{{ de.why_it_matters or f.why_it_matters or 'Indicates unauthorized execution or evasion activity.' }}</td></tr>
+                        <tr><td><strong>5. Supporting Evidence</strong></td><td class="mono" style="font-size: 6.5pt;">{{ de.supporting_evidence or f.supporting_evidence or (f.iocs | string) }}</td></tr>
+                        <tr><td><strong>6. Confidence &amp; Limitations</strong></td><td>{{ de.confidence_and_limitations or f.confidence_and_limitations or 'High confidence within evaluated scope; offline persistence not evaluated.' }}</td></tr>
+                        <tr><td><strong>7. Recommended Next Step</strong></td><td style="color: #1E3A8A; font-weight: bold;">{{ de.next_step or f.next_step or (f.remediation[0] if (f.remediation is defined and f.remediation) else 'Isolate affected host and preserve volatile memory.') }}</td></tr>
+                    </table>
                 </div>
 
                 <div class="layout-sidebar no-break">
@@ -585,19 +872,25 @@
                         </table>
 
                         <h3 class="micro-title">Evidence Artifacts &amp; Disassembly</h3>
-                        {% if f.artifacts.hex_dump %}
+                        {% if f.artifacts and f.artifacts.hex_dump %}
                         <div class="code-title">HEX DUMP EXCERPT (VAD BASE)</div>
                         <div class="hex-dump-box">{{ f.artifacts.hex_dump }}</div>
                         {% endif %}
 
-                        {% if f.artifacts.disassembly %}
+                        {% if f.artifacts and f.artifacts.disassembly %}
                         <div class="code-title">DISASSEMBLY SNIPPET</div>
                         <div class="hex-dump-box" style="color: #4ADE80;">{{ f.artifacts.disassembly }}</div>
                         {% endif %}
 
-                        {% if f.artifacts.decoded_script %}
+                        {% if f.artifacts and f.artifacts.decoded_script %}
                         <div class="code-title">DECODED PAYLOAD TRANSLATION</div>
                         <div class="hex-dump-box" style="color: #FCD34D;">{{ f.artifacts.decoded_script }}</div>
+                        {% endif %}
+
+                        {% if not f.artifacts or (not f.artifacts.hex_dump and not f.artifacts.disassembly and not f.artifacts.decoded_script) %}
+                        <div style="font-size: 7.5pt; color: #64748B; font-style: italic; margin-top: 4px;">
+                            No raw memory hex dump or disassembly associated with this finding (Lineage/DKOM structural evidence).
+                        </div>
                         {% endif %}
                     </div>
 
@@ -718,27 +1011,40 @@
                 <h3 class="micro-title">Cryptographic File Hashes</h3>
                 <table class="report-table">
                     <tr><th>Type</th><th>Hash Value</th></tr>
-                    <tr><td>SHA-256 (Payload)</td><td class="mono">9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08</td></tr>
-                    <tr><td>SHA-256 (Dump)</td><td class="mono">{{ data.evidence.sha256[:32] }}...</td></tr>
-                    <tr><td>MD5 (Shellcode)</td><td class="mono">e4d909c290d0fb1ca068ffaddf22cbd0</td></tr>
+                    <tr><td>SHA-256 (Image)</td><td class="mono">{{ data.evidence.sha256[:32] }}...</td></tr>
+                    {% if data.consolidated_iocs and data.consolidated_iocs.hashes %}
+                    {% for h in data.consolidated_iocs.hashes %}
+                    <tr><td>{{ h.type }}</td><td class="mono">{{ h.value }}</td></tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr><td colspan="2" style="color: #64748B; font-style: italic;">No secondary payload hashes extracted.</td></tr>
+                    {% endif %}
                 </table>
 
                 <h3 class="micro-title">Network Communication Endpoints</h3>
                 <table class="report-table">
                     <tr><th>Type</th><th>Destination</th><th>Port</th></tr>
-                    <tr><td>IPv4 (C2 Beacon)</td><td class="mono">198.51.100.44</td><td>443 (HTTPS)</td></tr>
-                    <tr><td>Domain (Beacon)</td><td class="mono">telemetry.msupdate-cloud.com</td><td>443 (TLS)</td></tr>
+                    {% if data.consolidated_iocs and data.consolidated_iocs.network %}
+                    {% for net in data.consolidated_iocs.network %}
+                    <tr><td>{{ net.type }}</td><td class="mono">{{ net.indicator }}</td><td>{{ net.port or 'N/A' }}</td></tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr><td colspan="3" style="color: #64748B; font-style: italic;">No network indicators extracted from evidence.</td></tr>
+                    {% endif %}
                 </table>
             </div>
 
             <div>
-                <h3 class="micro-title">Host &amp; Registry Artifacts</h3>
+                <h3 class="micro-title">Host &amp; Named Pipe Artifacts</h3>
                 <table class="report-table">
                     <tr><th>Artifact Category</th><th>Value / Key Path</th></tr>
-                    <tr><td>Named Pipe</td><td class="mono">\\.\pipe\ms_spool_ipc_32</td></tr>
-                    <tr><td>Mutex</td><td class="mono">Global\WinInitSecureLock_884</td></tr>
-                    <tr><td>Registry Key</td><td class="mono">HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce</td></tr>
-                    <tr><td>Injected Process</td><td class="mono">svchost.exe (PID: 3000)</td></tr>
+                    {% if data.consolidated_iocs and data.consolidated_iocs.host_artifacts %}
+                    {% for art in data.consolidated_iocs.host_artifacts %}
+                    <tr><td>{{ art.category }}</td><td class="mono">{{ art.value }}</td></tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr><td colspan="2" style="color: #64748B; font-style: italic;">No host/pipe artifacts extracted from evidence.</td></tr>
+                    {% endif %}
                 </table>
             </div>
         </div>
@@ -783,7 +1089,7 @@
         </p>
 
         <div class="callout callout-info no-break" style="font-family: 'JetBrains Mono', monospace; font-size: 7.5pt;">
-            Risk = &Sigma; [ (Severity_Weight &times; Confidence) + (Persistence &times; 15) + (Stealth_DKOM &times; 15) + (Privilege_Context &times; 10) ]
+            Risk = &Sigma; [ (Severity_Weight &times; Triage_Score) + (Persistence &times; 15) + (Stealth_DKOM &times; 15) + (Privilege_Context &times; 10) ]
         </div>
 
         <table class="report-table no-break">
@@ -794,7 +1100,7 @@
                 <th>Observed Case Score</th>
             </tr>
             <tr><td>Finding Severity</td><td>35%</td><td>Critical (1.0), High (0.8), Medium (0.5), Low (0.2)</td><td>1.0 (Critical Present)</td></tr>
-            <tr><td>Forensic Confidence</td><td>25%</td><td>Multi-engine corroboration and VAD tag confirmation</td><td>0.96 (High Assurance)</td></tr>
+            <tr><td>Heuristic Corroboration</td><td>25%</td><td>Multi-engine corroboration and VAD tag confirmation</td><td>0.96 (Triage Weight)</td></tr>
             <tr><td>Stealth / Rootkit Mechanism</td><td>15%</td><td>DKOM unlinking, unbacked memory, PPID spoofing</td><td>1.0 (Active Evasion)</td></tr>
             <tr><td>Persistence Vector</td><td>15%</td><td>Registry Run keys, WMI event subscriptions</td><td>0.8 (Registry Hooked)</td></tr>
             <tr><td>Execution Privilege</td><td>10%</td><td>NT AUTHORITY\SYSTEM vs Standard User execution</td><td>1.0 (SYSTEM Access)</td></tr>
@@ -824,6 +1130,41 @@
             </tr>
             {% endfor %}
         </table>
+
+        {% if data.mitigation_guidance %}
+        <h2 class="sub-title" style="margin-top: 14px;">Evidence-Linked Response &amp; Containment Guidance</h2>
+        <table class="report-table no-break">
+            <tr>
+                <th style="width: 12%;">Priority</th>
+                <th style="width: 14%;">Action Type</th>
+                <th style="width: 24%;">Associated Finding</th>
+                <th style="width: 32%;">Recommended Action</th>
+                <th style="width: 8%;">Auth</th>
+                <th style="width: 10%;">Target ID</th>
+            </tr>
+            {% for mg in data.mitigation_guidance %}
+            <tr>
+                <td>
+                    {% if mg.priority == 'CRITICAL' %}<span class="badge badge-critical">CRITICAL</span>
+                    {% elif mg.priority == 'HIGH' %}<span class="badge badge-high">HIGH</span>
+                    {% elif mg.priority == 'MEDIUM' %}<span class="badge badge-medium">MEDIUM</span>
+                    {% else %}<span class="badge badge-info">{{ mg.priority }}</span>{% endif %}
+                </td>
+                <td><span class="pill pill-mitre">{{ mg.action_type }}</span></td>
+                <td><strong>{{ mg.finding_title }}</strong></td>
+                <td>{{ mg.recommended_action }}</td>
+                <td style="text-align: center;">
+                    {% if mg.human_authorization_required %}
+                    <span class="badge badge-critical" style="font-size: 6pt;">REQUIRED</span>
+                    {% else %}
+                    <span class="badge badge-clean" style="font-size: 6pt;">AUTO</span>
+                    {% endif %}
+                </td>
+                <td class="mono" style="font-size: 6.5pt;">{{ mg.target_evidence_id }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
     </div>
 
     <!-- ================================================================= -->
@@ -877,11 +1218,20 @@
     <!-- ================================================================= -->
     <div class="page">
         <h1 class="section-title">
-            <span>16. Chain of Custody &amp; Evidence Ledger</span>
-            <span class="badge badge-clean">CHAIN INTEGRITY: VERIFIED</span>
+            <span>16. Pipeline Custody &amp; Report Integrity Seal</span>
+            {% if data.report_integrity_seal_status and data.report_integrity_seal_status.is_verified %}
+            <span class="badge badge-clean">{{ data.report_integrity_seal_status.label }}</span>
+            {% elif data.report_integrity_seal_status and data.report_integrity_seal_status.status == 'INVALID' %}
+            <span class="badge badge-critical">{{ data.report_integrity_seal_status.label }}</span>
+            {% else %}
+            <span class="badge badge-unknown">SEAL: UNVERIFIED / GENERATED</span>
+            {% endif %}
         </h1>
 
-        <h2 class="sub-title">Forensic Chain of Custody (Physical &amp; Electronic)</h2>
+        <h2 class="sub-title">Automated Analysis Pipeline Custody &amp; Transfer Log</h2>
+        <p style="font-size: 7.5pt; color: #64748B; margin-bottom: 6px;">
+            Note: This table records automated evidence ingest and transfer milestones within the software pipeline. It does not replace physical chain of custody documentation or statutory property seizure forms.
+        </p>
         <table class="report-table no-break">
             <tr>
                 <th style="width: 8%;">Item #</th>
@@ -903,12 +1253,15 @@
             {% endfor %}
         </table>
 
-        <h2 class="sub-title">Immutable Evidence Ledger (Cryptographic Block Chain)</h2>
+        <h2 class="sub-title">Report Integrity Seal (Cryptographic Metadata Chain)</h2>
+        <p style="font-size: 7.5pt; color: #64748B; margin-bottom: 6px;">
+            This seal represents a document-level cryptographic SHA-256 hash sequence computed across report generation metadata (evidence hash, investigation ID, verdict, and compilation state). It binds the compiled findings to prevent post-generation tampering. It does not replace the domain Evidence Ledger or independently verify physical evidence acquisition authenticity.
+        </p>
         <table class="report-table no-break">
             <tr>
                 <th style="width: 6%;">#</th>
                 <th style="width: 18%;">Timestamp (UTC)</th>
-                <th style="width: 24%;">Forensic Operation / Action</th>
+                <th style="width: 24%;">Sealed Milestone / Action</th>
                 <th style="width: 26%;">Current Block Hash (SHA-256)</th>
                 <th style="width: 26%;">Previous Block Hash</th>
             </tr>
@@ -925,12 +1278,22 @@
 
         <div class="callout callout-info no-break" style="display: flex; align-items: center; justify-content: space-between;">
             <div>
-                <div class="callout-title" style="color: var(--sev-clean);">&#128274; Ledger Proof of Non-Tampering</div>
-                <div>Each ledger entry is cryptographically salted and chained to the previous ledger state. Any modification to past entries invalidates the entire evidence root hash.</div>
+                <div class="callout-title" style="color: var(--sev-clean);">&#128274; Report Integrity Seal Verification</div>
+                <div>Each seal entry cryptographically binds the canonical payload to the preceding state hash (covering index, timestamp, evidence SHA-256, filename, investigation ID, verdict, and compilation findings count). This validates that report artifact metadata has not been altered post-compilation. Note: As a self-contained hash chain, this detects tampering but does not substitute for an asymmetric digital signature or physical chain-of-custody documentation.</div>
             </div>
+            {% if data.report_integrity_seal_status and data.report_integrity_seal_status.is_verified %}
             <div style="padding: 4px 10px; background: #DCFCE7; border: 1px solid #86EFAC; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #166534; white-space: nowrap;">
-                &#10004; INTEGRITY VERIFIED
+                &#10004; METADATA SEAL CRYPTOGRAPHICALLY VERIFIED
             </div>
+            {% elif data.report_integrity_seal_status and data.report_integrity_seal_status.status == 'INVALID' %}
+            <div style="padding: 4px 10px; background: #FEE2E2; border: 1px solid #FCA5A5; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #991B1B; white-space: nowrap;">
+                &#10006; SEAL INTEGRITY VERIFICATION FAILED
+            </div>
+            {% else %}
+            <div style="padding: 4px 10px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #475569; white-space: nowrap;">
+                &#9888; SEAL GENERATED &mdash; VERIFICATION PENDING
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -973,64 +1336,107 @@
                 <p><strong>Tri-State Forensic Logic:</strong> Deterministic three-valued logic system (TRUE / FALSE / UNKNOWN) ensuring that forensic conclusions distinguish between verified absence of malware and lack of investigative telemetry.</p>
                 <hr style="border: 0; border-top: 1px dotted #CBD5E1; margin: 6px 0;"/>
 
-                <p><strong>Section 65B Certificate:</strong> Mandatory statutory declaration under the Indian Evidence Act, 1872 certifying the lawful custody, functioning condition, and authenticity of electronic evidence submitted to court.</p>
+                <p><strong>Statutory Certification / Legal Admissibility:</strong> Formal certification under relevant jurisdiction rules (e.g., Section 65B, FRE 902) requiring execution by qualified personnel certifying acquisition provenance, tool validation, and evidence integrity.</p>
             </div>
         </div>
     </div>
 
     <!-- ================================================================= -->
-    <!-- PAGE 18: LEGAL SECTION 65B CERTIFICATE & EXPERT OPINION           -->
+    <!-- PAGE 18: TECHNICAL FINDINGS DECLARATION & EXAMINER ATTESTATION    -->
     <!-- ================================================================= -->
     <div class="page">
         <h1 class="section-title">
-            <span>18. Statutory Certification &amp; Expert Opinion</span>
-            <span class="badge badge-info">LEGAL PRODUCTION</span>
+            <span>18. Technical Findings Declaration &amp; Evidentiary Disclaimer</span>
+            <span class="badge badge-info">TECHNICAL DECLARATION</span>
         </h1>
 
-        <!-- Section 45 Opinion -->
-        <h2 class="sub-title">Expert Opinion pursuant to Section 45, Indian Evidence Act, 1872</h2>
+        <!-- Technical Evidentiary Assessment -->
+        <h2 class="sub-title">Technical Evidentiary Assessment</h2>
+        {% if data.case.is_synthetic_demo %}
+        <div class="callout callout-warning no-break" style="margin-bottom: 12px; background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+            <div class="callout-title">&#9888; DEMONSTRATION NOTICE &mdash; NOT LEGAL EVIDENCE</div>
+            This document was generated using synthetic demonstration fixtures. It does not reflect analysis of a physical memory image and is not admissible in court.
+        </div>
         <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
-            Based upon deterministic algorithmic parsing, cross-view kernel structure corroboration, and cryptographic ledger hashing performed upon the volatile memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>), it is my considered expert opinion as a trained digital forensics specialist that the subject system was actively compromised by fileless malware residing in unbacked executable memory and utilizing kernel Direct Kernel Object Manipulation to evade user-mode oversight.
+            <strong>[SYNTHETIC DEMONSTRATION]</strong> Based upon synthetic memory structures and simulated analysis pipelines, the demonstration pipeline registered simulated verdict: <code>{{ data.summary.verdict }}</code>. This output is generated strictly for interface verification and pipeline testing. No actual host compromise or cleanliness is evaluated.
         </p>
+        {% elif data.summary.verdict == 'DETECTED' %}
+        <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
+            Based upon deterministic algorithmic parsing, cross-view kernel structure corroboration, and cryptographic integrity verification performed upon the volatile memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>), the automated analysis identified forensic anomalies consistent with in-memory or evasion activity within the executed capability scope ({{ data.coverage.modules_run }} module(s) evaluated). Supported findings include: {% if data.ppid_anomalies %}{{ data.ppid_anomalies|length }} process lineage/PPID anomaly(ies){% endif %}{% if data.ppid_anomalies and data.hidden_processes %}, and {% endif %}{% if data.hidden_processes %}{{ data.hidden_processes|length }} cross-view process discrepancy(ies){% endif %}{% if not data.ppid_anomalies and not data.hidden_processes %}in-memory execution anomalies documented in the findings ledger{% endif %}. This technical assessment is strictly limited to the examined memory structures and capability checks executed during this analysis run.
+        </p>
+        {% elif data.summary.verdict == 'NOT DETECTED' %}
+        <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
+            Based upon deterministic algorithmic parsing, cross-view kernel structure corroboration, and cryptographic integrity verification performed upon the volatile memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>), no malicious indicators or structural discrepancies were detected by the {{ data.coverage.modules_run }} check(s) that actually executed. This finding confirms only that no anomalies were identified within the evaluated subsystems and capabilities; it does not claim or imply that the subject system is universally clean or free from threats in unexamined areas or unexecuted capabilities.
+        </p>
+        {% elif data.summary.verdict in ['UNKNOWN', 'INCONCLUSIVE'] %}
+        <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
+            Forensic evaluation of volatile memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>) produced an inconclusive outcome (verdict: <code>{{ data.summary.verdict }}</code>). The available memory evidence, symbol definitions, or structural records are insufficient to formulate a definitive finding within the evaluated scope. Further corroboration, symbol acquisition, or supplementary forensic artifact collection is required before an authoritative conclusion can be drawn.
+        </p>
+        {% elif data.summary.verdict == 'PARTIAL' %}
+        <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
+            Forensic analysis of volatile memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>) was only partially completed. Only {{ data.coverage.modules_run }} capability module(s) completed execution, while remaining capability checks were unexecuted or unavailable. This execution gap limits interpretation of the evidence, and no definitive determination of overall system state or compromise can be established from this partial record.
+        </p>
+        {% elif data.summary.verdict in ['FAILED', 'UNAVAILABLE'] %}
+        <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
+            Automated forensic analysis of volatile memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>) could not be completed due to execution failure or capability unavailability. This report documents an incomplete execution; it does not constitute a completed forensic examination, and no inferences regarding compromise or system integrity can be supported.
+        </p>
+        {% else %}
+        <p style="font-size: 8pt; margin-bottom: 12px; text-align: justify;">
+            Automated forensic examination of memory image <code>{{ data.evidence.filename }}</code> (SHA-256: <code>{{ data.evidence.sha256 }}</code>) did not produce a finalized determination. Technical findings remain indeterminate and cannot support a conclusive determination.
+        </p>
+        {% endif %}
 
-        <!-- Section 65B(4) Certificate -->
-        <div style="border: 2px solid #0B1220; border-radius: 6px; padding: 12px; background: #FFFFFF; margin-bottom: 12px;" class="no-break">
-            <div style="text-align: center; font-weight: 800; font-size: 9.5pt; text-transform: uppercase; margin-bottom: 6px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;">
-                CERTIFICATE UNDER SECTION 65B(4) OF THE INDIAN EVIDENCE ACT, 1872
+        <!-- Evidentiary Disclaimer & Execution Statement -->
+        <div class="callout callout-info no-break" style="margin-bottom: 12px;">
+            <div class="callout-title">&#128737; Software Output Disclaimer &amp; Legal Admissibility Notice</div>
+            This document represents automated technical reasoning generated by forensic software operating upon the ingested memory artifact. The software does not establish legal admissibility, prove physical acquisition provenance, or independently satisfy statutory chain of custody requirements. Formal legal admissibility (such as under Section 65B/45 of the Indian Evidence Act, Federal Rule of Evidence 902, or equivalent jurisdictional standards) requires physical acquisition verification and attestation by authorized human forensic personnel.
+        </div>
+
+        {% if data.case.statutory_declaration %}
+        <h2 class="sub-title">Operator Statutory Declaration</h2>
+        <p style="font-size: 7.5pt; line-height: 1.4; margin-bottom: 8px; text-align: justify;">
+            The following statutory declaration was supplied by the authorizing operator:
+        </p>
+        <div style="background: #F8FAFC; border: 1px solid var(--border-subtle); padding: 8px; font-size: 7.5pt; margin-bottom: 10px;">
+            {{ data.case.statutory_declaration }}
+        </div>
+        {% else %}
+        <p style="font-size: 7.5pt; line-height: 1.4; margin-bottom: 8px; text-align: justify;">
+            <strong>Automated Generation Attestation:</strong>
+        </p>
+        <ol style="margin-left: 16px; font-size: 7.5pt; line-height: 1.35; margin-bottom: 8px;">
+            <li>This report was compiled deterministically by <strong>{{ data.engine.name }}</strong> (Version {{ data.engine.version }}) from evidence structures extracted during automated execution.</li>
+            <li>The source digital evidence file (<strong>{{ data.evidence.filename }}</strong>) was cryptographically registered with SHA-256 hash <code>{{ data.evidence.sha256 }}</code>.</li>
+            <li>Observed findings reflect the specific detection modules executed during the analysis session. Unexecuted capabilities remain unassessed.</li>
+        </ol>
+        {% endif %}
+
+        {% if data.case.examiner_signature_required or (data.case.examiner.name != 'Forensic Analyst' and data.case.examiner.name != 'Demo Analyst') %}
+        <div class="layout-sidebar" style="margin-top: 10px; align-items: flex-end;">
+            <div>
+                <div style="font-size: 7.5pt; font-weight: bold; margin-bottom: 2px;">OPERATOR / EXAMINER ATTESTATION:</div>
+                <div style="font-size: 7.5pt;">Name: {{ data.case.examiner.name }}</div>
+                <div style="font-size: 7.5pt;">Designation: {{ data.case.examiner.designation }}</div>
+                <div style="font-size: 7.5pt;">Organization / Lab: {{ data.case.examiner.agency }}</div>
+                <div style="font-size: 7.5pt;">Date: {{ data.case.report_ts_ist }}</div>
+                
+                <div class="signature-box" style="margin-top: 6px;">
+                    [ SIGNATURE OF REVIEWING ANALYST ]
+                </div>
             </div>
 
-            <p style="font-size: 7.5pt; line-height: 1.4; margin-bottom: 8px; text-align: justify;">
-                I, <strong>{{ data.case.examiner.name }}</strong>, holding the post of <strong>{{ data.case.examiner.designation }}</strong> at <strong>{{ data.case.examiner.agency }}</strong>, do hereby solemnly declare and certify under Section 65B(4) of the Indian Evidence Act, 1872:
-            </p>
-
-            <ol style="margin-left: 16px; font-size: 7.5pt; line-height: 1.35; margin-bottom: 8px;">
-                <li>That the electronic record contained in this forensic report was generated by the <strong>{{ data.engine.name }}</strong> (Version {{ data.engine.version }}) running upon an isolated forensic workstation in the ordinary course of official duty.</li>
-                <li>That during the period over which the computer system was used to generate this electronic record, the system was operating properly in a secure, write-blocked forensic laboratory environment.</li>
-                <li>That the source digital evidence file (<strong>{{ data.evidence.filename }}</strong>) was cryptographically authenticated with SHA-256 hash <code>{{ data.evidence.sha256 }}</code> and remained strictly unmodified throughout the analysis.</li>
-                <li>That the contents of this electronic report faithfully represent the physical memory structures extracted from the evidence artifact, without manual modification or fabrication.</li>
-            </ol>
-
-            <div class="layout-sidebar" style="margin-top: 10px; align-items: flex-end;">
-                <div>
-                    <div style="font-size: 7.5pt; font-weight: bold; margin-bottom: 2px;">EXAMINER DETAILS &amp; SIGNATURE:</div>
-                    <div style="font-size: 7.5pt;">Name: {{ data.case.examiner.name }}</div>
-                    <div style="font-size: 7.5pt;">Designation: {{ data.case.examiner.designation }}</div>
-                    <div style="font-size: 7.5pt;">Department / Lab: {{ data.case.examiner.agency }}</div>
-                    <div style="font-size: 7.5pt;">Officer ID: {{ data.case.examiner.id }}</div>
-                    <div style="font-size: 7.5pt;">Date &amp; Place: {{ data.case.report_ts_ist }} IST</div>
-                    
-                    <div class="signature-box" style="margin-top: 6px;">
-                        [ SIGNATURE OF AUTHORIZED DIGITAL FORENSIC EXAMINER ]
-                    </div>
-                </div>
-
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div class="stamp-box">
-                        OFFICIAL<br/>FORENSIC LAB<br/>STAMP &amp; SEAL
-                    </div>
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div class="stamp-box">
+                    LAB / ENTITY<br/>STAMP
                 </div>
             </div>
         </div>
+        {% else %}
+        <div style="margin-top: 12px; padding: 8px; background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: 4px; font-size: 7pt; color: #64748B;">
+            <strong>REPORT ATTESTATION STATUS:</strong> Automated Software Generation. No human operator credentials, statutory declarations, or judicial distribution details were supplied for this run. To certify this report for judicial production, an authorized forensic examiner must review the underlying evidence and execute formal jurisdiction-appropriate declarations.
+        </div>
+        {% endif %}
+    </div>
     </div>
 
 </body>

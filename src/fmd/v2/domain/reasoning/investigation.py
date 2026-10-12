@@ -34,13 +34,35 @@ class InvestigationDossier:
     def process_tree_anomalies(self) -> List[Any]:
         return [
             o for o in self.all_observations 
-            if getattr(o, "anomaly_category", "") in ("PPID_SPOOFING", "EXPLOIT_SPAWN", "SYSTEM_MASQUERADE")
+            if getattr(o, "anomaly_category", "") in (
+                "PPID_SPOOFING", "EXPLOIT_SPAWN", "SYSTEM_MASQUERADE",
+                "SUSPICIOUS_COMMAND_LINE", "PROCESS_LINEAGE_ANOMALY"
+            )
         ]
 
     @property
     def hidden_process_anomalies(self) -> List[Any]:
         return [
             o for o in self.all_observations 
-            if getattr(o, "anomaly_category", "") == "ROOTKIT_DKOM"
+            if getattr(o, "anomaly_category", "") in ("ROOTKIT_DKOM", "UNLINKED_PROCESS_DISCREPANCY")
         ]
+
+    @property
+    def injected_code_anomalies(self) -> List[Any]:
+        return [
+            o for o in self.all_observations 
+            if getattr(o, "anomaly_category", "") in ("CODE_INJECTION", "MALFIND_VAD", "INJECTED_CODE")
+        ]
+
+    @property
+    def yara_anomalies(self) -> List[Any]:
+        return [
+            o for o in self.all_observations 
+            if getattr(o, "anomaly_category", "") == "YARA_RULE_MATCH" or hasattr(o, "rule_name")
+        ]
+
+    @property
+    def mitigation_recommendations(self) -> List[Any]:
+        from fmd.v2.domain.reasoning.mitigation import MitigationEngine
+        return MitigationEngine.generate_recommendations(self)
 

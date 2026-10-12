@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compy V2 - Law Enforcement Forensic Engine</title>
+    <title>Compy V2 - Memory Forensics &amp; DFIR Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -28,17 +28,18 @@
         .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         .spinner { animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #60a5fa; font-weight: 600; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
     <!-- Header -->
-    <div class="text-center mb-10 w-full max-w-3xl">
+    <div class="text-center mb-8 w-full max-w-3xl">
         <div class="inline-flex items-center justify-center p-4 bg-brand-800 rounded-full mb-4 shadow-lg border border-gray-700">
             <i class="fa-solid fa-shield-halved text-4xl text-blue-500"></i>
         </div>
         <h1 class="text-4xl font-bold mb-2 tracking-tight">Compy V2 Forensic Engine</h1>
-        <p class="text-gray-400 text-lg mb-3">Automated Fileless Malware Detection & Section 65B Report Generation</p>
+        <p class="text-gray-400 text-lg mb-3">Memory Forensics, Fileless Malware Detection &amp; DFIR Forensic Reporting</p>
         <a href="/report/sample" target="_blank" class="inline-flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-700 hover:bg-cyan-900 transition-colors">
             <i class="fa-solid fa-file-contract"></i>
             <span>Preview Mandiant/CrowdStrike-tier 19-Page Sample DFIR Report</span>
@@ -49,23 +50,76 @@
     <!-- Main Card -->
     <div class="glass-panel w-full max-w-3xl rounded-2xl shadow-2xl p-8 relative overflow-hidden">
         
-        <!-- Step 1: Upload (Changed to File Path) -->
+        <!-- Mode Tabs -->
+        <div id="mode-tabs" class="flex border-b border-gray-700 mb-6">
+            <button id="tab-demo-btn" onclick="switchMode('demo')" class="tab-btn active py-3 px-6 text-sm flex items-center space-x-2 transition-colors">
+                <i class="fa-solid fa-flask"></i>
+                <span>Synthetic Demo Mode</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300 font-mono border border-amber-700/50">DEMO</span>
+            </button>
+            <button id="tab-real-btn" onclick="switchMode('real')" class="tab-btn text-gray-400 hover:text-gray-200 py-3 px-6 text-sm flex items-center space-x-2 transition-colors">
+                <i class="fa-solid fa-microchip"></i>
+                <span>Real Forensic Analysis Mode</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300 font-mono border border-blue-700/50">REAL</span>
+            </button>
+        </div>
+
+        <!-- Step 1: Input Pane (Switched by Tabs) -->
         <div id="step-upload" class="flex flex-col items-center justify-center">
-            <div class="w-full bg-brand-800 rounded-xl p-8 border border-gray-600 shadow-inner">
-                <h3 class="text-xl font-semibold mb-2 text-center">Enter Absolute File Path</h3>
-                <p class="text-gray-400 mb-6 text-center text-sm">Provide the direct local path to the raw memory dump (e.g., C:\dumps\evidence.raw)</p>
+            
+            <!-- DEMO MODE PANEL -->
+            <div id="panel-demo" class="w-full bg-brand-800 rounded-xl p-6 border border-amber-900/50 shadow-inner">
+                <div class="p-3 bg-amber-950/40 border border-amber-700/60 rounded-lg mb-4 text-xs text-amber-300 flex items-start space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation text-base mt-0.5 text-amber-400"></i>
+                    <div>
+                        <span class="font-bold">SYNTHETIC DEMONSTRATION NOTICE:</span>
+                        This mode uses deterministic synthetic evidence fixtures to demonstrate the Compy detection pipeline, process tree anomalies, and DFIR forensic report generation. No physical memory dump is parsed.
+                    </div>
+                </div>
                 
-                <input type="text" id="file-path-input" placeholder="C:\path\to\memory_dump.raw" class="w-full px-4 py-3 rounded bg-brand-900 border border-gray-500 text-white focus:outline-none focus:border-blue-500 mb-6 font-mono text-sm">
-                
-                <button onclick="startAnalysis()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-[1.02]">
-                    Start Forensic Analysis
+                <div class="space-y-3 mb-6">
+                    <label class="block text-sm font-medium text-gray-300">Synthetic Scenario:</label>
+                    <div class="p-3 bg-brand-900 rounded-lg border border-gray-700 flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-sm text-white">Cobalt Strike Beacon Simulation</p>
+                            <p class="text-xs text-gray-400 font-mono">PID 4820 (powershell.exe) - PPID Spoofing & DKOM Unlinked PID</p>
+                        </div>
+                        <span class="px-2 py-1 rounded text-xs bg-red-900/60 text-red-300 font-mono border border-red-700">SYNTHETIC FIXTURE</span>
+                    </div>
+                </div>
+
+                <button onclick="startDemoAnalysis()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-[1.01] flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-play"></i>
+                    <span>Run Synthetic Demonstration</span>
                 </button>
             </div>
-            
-            <div class="mt-6 text-sm text-gray-500 flex items-center space-x-2">
-                <i class="fa-solid fa-bolt"></i>
-                <span>Direct disk read enabled. No browser upload required.</span>
+
+            <!-- REAL MODE PANEL -->
+            <div id="panel-real" class="hidden w-full bg-brand-800 rounded-xl p-6 border border-blue-900/50 shadow-inner">
+                <div class="p-3 bg-blue-950/40 border border-blue-700/60 rounded-lg mb-4 text-xs text-blue-300 flex items-start space-x-2">
+                    <i class="fa-solid fa-circle-info text-base mt-0.5 text-blue-400"></i>
+                    <div>
+                        <span class="font-bold">REAL FORENSIC ACQUISITION MODE:</span>
+                        Analyzes a raw memory dump using the real Compy engine. Requires Volatility 3 and operating system symbol tables. If symbols or Volatility 3 are unavailable, the engine will honestly report capabilities as unavailable rather than simulating findings.
+                    </div>
+                </div>
+
+                <h3 class="text-lg font-semibold mb-2">Target Memory Image Path</h3>
+                <p class="text-gray-400 mb-4 text-xs">Supported raw memory formats: .raw, .mem, .dmp, .vmem, .bin, .lime</p>
+                
+                <input type="text" id="file-path-input" placeholder="C:\dumps\evidence.raw" class="w-full px-4 py-3 rounded bg-brand-900 border border-gray-500 text-white focus:outline-none focus:border-blue-500 mb-4 font-mono text-sm">
+                
+                <button onclick="startRealAnalysis()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-[1.01] flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>Execute Real Forensic Scan</span>
+                </button>
+
+                <div class="mt-4 text-xs text-gray-500 flex items-center space-x-2">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Direct disk read enabled. SHA-256 evidence integrity calculated prior to analysis.</span>
+                </div>
             </div>
+
         </div>
 
         <!-- Step 2: Processing -->
@@ -86,25 +140,40 @@
 
         <!-- Step 3: Result -->
         <div id="step-result" class="hidden flex-col items-center justify-center py-6">
+            
+            <!-- Result Banner (Mode specific) -->
+            <div id="result-mode-banner" class="w-full mb-6 p-3 rounded-lg border text-xs font-semibold text-center flex items-center justify-center space-x-2">
+                <!-- Injected by JS -->
+            </div>
+
             <div id="result-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl">
                 <!-- Icon injected by JS -->
             </div>
-            <h2 class="text-3xl font-bold mb-2">Analysis Complete</h2>
-            <p id="result-text" class="text-xl mb-8">System Status: Unknown</p>
+            <h2 id="result-title" class="text-3xl font-bold mb-2">Analysis Complete</h2>
+            <p id="result-text" class="text-xl mb-6 text-center">System Status: Unknown</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-4">
+            <!-- Capability / Unavailable Notice if applicable -->
+            <div id="result-capability-notice" class="hidden w-full mb-6 p-4 bg-yellow-950/40 border border-yellow-700 rounded-lg text-sm text-yellow-300">
+                <p id="result-capability-message" class="font-mono text-xs">-</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-4">
                 <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
                     <p class="text-gray-400 text-sm mb-1">Investigation ID</p>
                     <p id="res-inv-id" class="font-mono text-sm text-white break-all">-</p>
                 </div>
                 <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
-                    <p class="text-gray-400 text-sm mb-1">Compliance Standard</p>
-                    <p class="font-semibold text-green-400"><i class="fa-solid fa-check-circle mr-1"></i> Section 65B IEA / CERT-In</p>
+                    <p class="text-gray-400 text-sm mb-1">Forensic Risk Score</p>
+                    <p id="res-risk-score" class="font-bold text-lg text-gray-300">-</p>
+                </div>
+                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
+                    <p class="text-gray-400 text-sm mb-1">Execution Architecture</p>
+                    <p id="res-exec-mode" class="font-semibold text-blue-400"><i class="fa-solid fa-code-branch mr-1"></i> Compy V2 Native Core</p>
                 </div>
             </div>
 
             <!-- Forensic Indicator Badges -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-8">
                 <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
                     <div>
                         <p class="text-gray-400 text-xs mb-1">Process Lineage (PPID)</p>
@@ -114,35 +183,53 @@
                 </div>
                 <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
                     <div>
-                        <p class="text-gray-400 text-xs mb-1">Rootkit DKOM (psscan vs pslist)</p>
+                        <p class="text-gray-400 text-xs mb-1">Rootkit DKOM (psscan)</p>
                         <p id="res-rootkit-status" class="font-semibold text-sm text-green-400">Zero Unlinked PIDs</p>
                     </div>
                     <span id="res-rootkit-badge" class="px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono">0 Hidden</span>
                 </div>
+                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs mb-1">YARA Signatures</p>
+                        <p id="res-yara-status" class="font-semibold text-sm text-green-400">Zero Matches</p>
+                    </div>
+                    <span id="res-yara-badge" class="px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono">0 Matches</span>
+                </div>
+                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-400 text-xs mb-1">Mitigation Guidance</p>
+                        <p id="res-mitigation-status" class="font-semibold text-sm text-blue-400">Baseline Guidance</p>
+                    </div>
+                    <span id="res-mitigation-badge" class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-300 font-mono">Guidance Ready</span>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
-                <a id="download-pdf-btn" href="#" class="text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
+            <div id="result-actions" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                <a id="download-pdf-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('PDF report artifact is not yet ready.');}" class="text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
                     <i class="fa-solid fa-file-pdf"></i>
                     <span>Download PDF</span>
                 </a>
-                <a id="view-html-btn" href="#" target="_blank" class="text-center bg-cyan-700 hover:bg-cyan-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
+                <a id="view-html-btn" href="#" target="_blank" rel="noopener noreferrer" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('HTML report artifact is not yet ready.');}" class="text-center bg-cyan-700 hover:bg-cyan-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    <span>View HTML Report</span>
+                    <span>View HTML</span>
                 </a>
-                <a id="download-json-btn" href="#" class="text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
+                <a id="download-html-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('HTML report artifact is not yet ready.');}" class="text-center bg-blue-700 hover:bg-blue-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
+                    <i class="fa-solid fa-file-code"></i>
+                    <span>Download HTML</span>
+                </a>
+                <a id="download-json-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('JSON evidence artifact is not yet ready.');}" class="text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
                     <i class="fa-solid fa-code"></i>
                     <span>Download JSON</span>
                 </a>
             </div>
-            <button onclick="resetApp()" class="mt-6 text-gray-400 hover:text-white underline">Analyze Another File</button>
+            <button onclick="resetApp()" class="mt-6 text-gray-400 hover:text-white underline">Start Another Analysis</button>
         </div>
 
     </div>
 
     <!-- Footer -->
     <div class="mt-12 text-center text-gray-600 text-sm">
-        <p>Compsognathus V2 &copy; 2026. Authorized Law Enforcement Use Only.</p>
+        <p>Compsognathus V2 &copy; 2026. Digital Forensics &amp; Incident Response Platform.</p>
     </div>
 
     <script>
@@ -151,30 +238,88 @@
         const stepResult = document.getElementById('step-result');
         const processingStatus = document.getElementById('processing-status');
         const progressBar = document.getElementById('progress-bar');
+        const modeTabs = document.getElementById('mode-tabs');
         
+        let currentMode = 'demo';
         let pollInterval;
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const tabDemo = document.getElementById('tab-demo-btn');
+            const tabReal = document.getElementById('tab-real-btn');
+            const panelDemo = document.getElementById('panel-demo');
+            const panelReal = document.getElementById('panel-real');
+
+            if (mode === 'demo') {
+                tabDemo.className = 'tab-btn active py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
+                tabReal.className = 'tab-btn text-gray-400 hover:text-gray-200 py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
+                panelDemo.classList.remove('hidden');
+                panelReal.classList.add('hidden');
+            } else {
+                tabReal.className = 'tab-btn active py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
+                tabDemo.className = 'tab-btn text-gray-400 hover:text-gray-200 py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
+                panelReal.classList.remove('hidden');
+                panelDemo.classList.add('hidden');
+            }
+        }
 
         function resetApp() {
             stepResult.classList.add('hidden');
+            stepResult.classList.remove('flex');
+            stepProcessing.classList.add('hidden');
+            stepProcessing.classList.remove('flex');
             stepUpload.classList.remove('hidden');
+            modeTabs.classList.remove('hidden');
             progressBar.style.width = '0%';
             document.getElementById('file-path-input').value = '';
+            document.getElementById('result-capability-notice').classList.add('hidden');
+            document.getElementById('result-actions').classList.remove('hidden');
             if(pollInterval) clearInterval(pollInterval);
         }
 
-        async function startAnalysis() {
+        async function startDemoAnalysis() {
+            stepUpload.classList.add('hidden');
+            modeTabs.classList.add('hidden');
+            stepProcessing.classList.remove('hidden');
+            stepProcessing.classList.add('flex');
+            
+            progressBar.style.width = '25%';
+            processingStatus.innerText = "Executing Synthetic Analysis Pipeline...";
+
+            try {
+                const response = await fetch('/api/analyze/demo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sample_name: "CobaltStrike_Beacon_Sample" })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    pollJobStatus(data.job_id);
+                } else {
+                    alert('Failed to start demo analysis.');
+                    resetApp();
+                }
+            } catch (error) {
+                alert('Connection error.');
+                resetApp();
+            }
+        }
+
+        async function startRealAnalysis() {
             const filePath = document.getElementById('file-path-input').value.trim();
             if(!filePath) {
-                alert("Please enter a valid absolute file path.");
+                alert("Please enter a valid absolute file path to a memory image (.raw, .mem, .dmp, etc.).");
                 return;
             }
 
             stepUpload.classList.add('hidden');
+            modeTabs.classList.add('hidden');
             stepProcessing.classList.remove('hidden');
             stepProcessing.classList.add('flex');
             
             progressBar.style.width = '20%';
-            processingStatus.innerText = "Submitting Job to Background Queue...";
+            processingStatus.innerText = "Submitting Real Memory Analysis Job...";
 
             try {
                 const response = await fetch('/api/analyze', {
@@ -187,7 +332,8 @@
                     const data = await response.json();
                     pollJobStatus(data.job_id);
                 } else {
-                    alert('Failed to start analysis.');
+                    const err = await response.json().catch(() => ({ detail: 'Failed to start analysis.' }));
+                    alert(`Request Error: ${err.detail || 'Failed to start analysis.'}`);
                     resetApp();
                 }
             } catch (error) {
@@ -204,19 +350,23 @@
                     const res = await fetch(`/api/status/${jobId}`);
                     const data = await res.json();
                     
-                    processingStatus.innerText = data.message;
+                    processingStatus.innerText = data.message || "Processing memory image...";
                     
-                    if (data.status === 'processing') {
-                        // Slowly move progress bar forward for UX
-                        if(fakeProgress < 90) fakeProgress += 2;
+                    if (data.status === 'processing' || data.status === 'queued') {
+                        if(fakeProgress < 90) fakeProgress += 4;
                         progressBar.style.width = `${fakeProgress}%`;
                     } 
                     else if (data.status === 'completed') {
                         clearInterval(pollInterval);
                         progressBar.style.width = '100%';
-                        setTimeout(() => showResult(data), 500);
+                        setTimeout(() => showResult(data), 400);
                     }
-                    else if (data.status === 'failed') {
+                    else if (data.status === 'unavailable') {
+                        clearInterval(pollInterval);
+                        progressBar.style.width = '100%';
+                        setTimeout(() => showUnavailableResult(data), 400);
+                    }
+                    else if (data.status === 'failed' || data.status === 'unsupported') {
                         clearInterval(pollInterval);
                         alert(`Analysis Failed: ${data.message}`);
                         resetApp();
@@ -224,7 +374,65 @@
                 } catch (e) {
                     console.error("Polling error", e);
                 }
-            }, 2000);
+            }, 1000);
+        }
+
+        function showUnavailableResult(data) {
+            stepProcessing.classList.add('hidden');
+            stepProcessing.classList.remove('flex');
+            stepResult.classList.remove('hidden');
+            stepResult.classList.add('flex');
+
+            const banner = document.getElementById('result-mode-banner');
+            banner.className = "w-full mb-6 p-3 rounded-lg border bg-yellow-950/60 border-yellow-600 text-yellow-300 text-xs font-semibold text-center flex items-center justify-center space-x-2";
+            banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span>REAL FORENSIC MODE — CAPABILITY UNAVAILABLE</span>';
+
+            const resultText = document.getElementById('result-text');
+            const iconContainer = document.getElementById('result-icon-container');
+            resultText.innerHTML = `Execution Status: <span class="text-yellow-400 font-bold">CAPABILITY UNAVAILABLE</span>`;
+            iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-400 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+            iconContainer.innerHTML = '<i class="fa-solid fa-ban"></i>';
+
+            document.getElementById('res-inv-id').innerText = data.investigation_id || "NOT_ASSIGNED";
+            if (document.getElementById('res-risk-score')) {
+                document.getElementById('res-risk-score').innerText = "0 / 100";
+                document.getElementById('res-risk-score').className = "font-bold text-lg text-gray-400";
+            }
+            document.getElementById('res-exec-mode').innerHTML = '<span class="text-yellow-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Provider Missing (volatility3)</span>';
+
+            const notice = document.getElementById('result-capability-notice');
+            notice.classList.remove('hidden');
+            document.getElementById('result-capability-message').innerText = data.message || "Forensic provider 'volatility3' or required symbol table is unavailable on host.";
+
+            const ppidStatus = document.getElementById('res-ppid-status');
+            const ppidBadge = document.getElementById('res-ppid-badge');
+            ppidStatus.innerText = "UNAVAILABLE (Not Executed)";
+            ppidStatus.className = "font-semibold text-sm text-gray-400";
+            ppidBadge.innerText = "NOT_RUN";
+            ppidBadge.className = "px-2 py-1 rounded text-xs bg-gray-800 text-gray-400 font-mono";
+
+            const rootkitStatus = document.getElementById('res-rootkit-status');
+            const rootkitBadge = document.getElementById('res-rootkit-badge');
+            rootkitStatus.innerText = "UNAVAILABLE (Not Executed)";
+            rootkitStatus.className = "font-semibold text-sm text-gray-400";
+            rootkitBadge.innerText = "NOT_RUN";
+            rootkitBadge.className = "px-2 py-1 rounded text-xs bg-gray-800 text-gray-400 font-mono";
+
+            const yaraStatus = document.getElementById('res-yara-status');
+            const yaraBadge = document.getElementById('res-yara-badge');
+            yaraStatus.innerText = "UNAVAILABLE (Not Executed)";
+            yaraStatus.className = "font-semibold text-sm text-gray-400";
+            yaraBadge.innerText = "NOT_RUN";
+            yaraBadge.className = "px-2 py-1 rounded text-xs bg-gray-800 text-gray-400 font-mono";
+
+            const mitigationStatus = document.getElementById('res-mitigation-status');
+            const mitigationBadge = document.getElementById('res-mitigation-badge');
+            mitigationStatus.innerText = "Offline Capability Failure Guidance";
+            mitigationStatus.className = "font-semibold text-sm text-yellow-400";
+            mitigationBadge.innerText = "Acquire Symbols";
+            mitigationBadge.className = "px-2 py-1 rounded text-xs bg-yellow-900 text-yellow-300 font-mono";
+
+            document.getElementById('result-actions').classList.add('hidden');
         }
 
         function showResult(data) {
@@ -235,17 +443,59 @@
             
             document.getElementById('res-inv-id').innerText = data.investigation_id;
             
+            const banner = document.getElementById('result-mode-banner');
+            const isDemo = data.is_synthetic_demo === true || data.mode === 'DEMO';
+            
+            if (isDemo) {
+                banner.className = "w-full mb-6 p-3 rounded-lg border bg-amber-950/60 border-amber-600 text-amber-300 text-xs font-semibold text-center flex items-center justify-center space-x-2";
+                banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span>SYNTHETIC DEMONSTRATION — NOT REAL FORENSIC EVIDENCE</span>';
+                document.getElementById('res-exec-mode').innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-flask mr-1"></i> Synthetic Demo Engine</span>';
+            } else {
+                banner.className = "w-full mb-6 p-3 rounded-lg border bg-blue-950/60 border-blue-600 text-blue-300 text-xs font-semibold text-center flex items-center justify-center space-x-2";
+                banner.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>AUTHENTIC EVIDENCE CHAIN — REAL FORENSIC ENGINE</span>';
+                document.getElementById('res-exec-mode').innerHTML = '<span class="text-blue-400"><i class="fa-solid fa-microchip mr-1"></i> Compy V2 Native Core</span>';
+            }
+
+            const riskScore = data.risk_score !== undefined ? data.risk_score : null;
+            const riskScoreEl = document.getElementById('res-risk-score');
+            if (riskScoreEl) {
+                if (riskScore !== null) {
+                    riskScoreEl.innerText = `${riskScore} / 100`;
+                    if (riskScore >= 75) {
+                        riskScoreEl.className = "font-bold text-lg text-red-400";
+                    } else if (riskScore >= 30) {
+                        riskScoreEl.className = "font-bold text-lg text-yellow-400";
+                    } else {
+                        riskScoreEl.className = "font-bold text-lg text-green-400";
+                    }
+                } else {
+                    riskScoreEl.innerText = "N/A";
+                    riskScoreEl.className = "font-bold text-lg text-gray-400";
+                }
+            }
+
             const resultText = document.getElementById('result-text');
             const iconContainer = document.getElementById('result-icon-container');
+
+            const verdict = (data.verdict || '').toUpperCase();
+            const finding = (data.finding || '').toUpperCase();
             
-            if(data.finding.toLowerCase().includes('true')) {
+            if (verdict === 'DETECTED' || finding === 'TRUE') {
                 resultText.innerHTML = `System Status: <span class="text-red-500 font-bold">Malware Detected (TRUE)</span>`;
                 iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-red-900 text-red-500 border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
                 iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-            } else if (data.finding.toLowerCase().includes('false')) {
-                resultText.innerHTML = `System Status: <span class="text-green-500 font-bold">Clean (FALSE)</span>`;
+            } else if (verdict === 'NOT DETECTED' || finding === 'FALSE') {
+                resultText.innerHTML = `System Status: <span class="text-green-500 font-bold">No Threats Detected Within Executed Scope (FALSE)</span>`;
                 iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-green-900 text-green-500 border-2 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]";
                 iconContainer.innerHTML = '<i class="fa-solid fa-shield-check"></i>';
+            } else if (verdict === 'PARTIAL' || finding === 'PARTIAL') {
+                resultText.innerHTML = `System Status: <span class="text-yellow-500 font-bold">Partial Analysis (PARTIAL)</span>`;
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-500 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+                iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else if (verdict === 'UNAVAILABLE' || finding === 'UNAVAILABLE') {
+                resultText.innerHTML = `System Status: <span class="text-yellow-500 font-bold">Capability Unavailable (UNAVAILABLE)</span>`;
+                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-500 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+                iconContainer.innerHTML = '<i class="fa-solid fa-ban"></i>';
             } else {
                 resultText.innerHTML = `System Status: <span class="text-yellow-500 font-bold">Inconclusive (UNKNOWN)</span>`;
                 iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-500 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
@@ -254,38 +504,70 @@
             
             const ppidCount = data.ppid_count || 0;
             const rootkitCount = data.rootkit_count || 0;
+            const yaraCount = data.yara_count || 0;
+            const mitigationCount = data.mitigation_count || 0;
 
             const ppidStatus = document.getElementById('res-ppid-status');
             const ppidBadge = document.getElementById('res-ppid-badge');
-            if (ppidCount > 0) {
-                ppidStatus.innerText = "PPID Spoofing / Exploit Spawns";
-                ppidStatus.className = "font-semibold text-sm text-red-400";
-                ppidBadge.innerText = `${ppidCount} Anomalies`;
-                ppidBadge.className = "px-2 py-1 rounded text-xs bg-red-900 text-red-300 font-mono";
-            } else {
-                ppidStatus.innerText = "Baseline Verified";
-                ppidStatus.className = "font-semibold text-sm text-green-400";
-                ppidBadge.innerText = "0 Anomalies";
-                ppidBadge.className = "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+            if (data.indicators && data.indicators.ppid_status) {
+                ppidStatus.innerText = data.indicators.ppid_status;
+                ppidBadge.innerText = data.indicators.ppid_badge;
+                ppidStatus.className = ppidCount > 0 ? "font-semibold text-sm text-red-400" : "font-semibold text-sm text-green-400";
+                ppidBadge.className = ppidCount > 0 ? "px-2 py-1 rounded text-xs bg-red-900 text-red-300 font-mono" : "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
             }
 
             const rootkitStatus = document.getElementById('res-rootkit-status');
             const rootkitBadge = document.getElementById('res-rootkit-badge');
-            if (rootkitCount > 0) {
-                rootkitStatus.innerText = "Unlinked DKOM Detected";
-                rootkitStatus.className = "font-semibold text-sm text-purple-400";
-                rootkitBadge.innerText = `${rootkitCount} Hidden PIDs`;
-                rootkitBadge.className = "px-2 py-1 rounded text-xs bg-purple-900 text-purple-300 font-mono";
-            } else {
-                rootkitStatus.innerText = "Zero Unlinked PIDs";
-                rootkitStatus.className = "font-semibold text-sm text-green-400";
-                rootkitBadge.innerText = "0 Hidden";
-                rootkitBadge.className = "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+            if (data.indicators && data.indicators.rootkit_status) {
+                rootkitStatus.innerText = data.indicators.rootkit_status;
+                rootkitBadge.innerText = data.indicators.rootkit_badge;
+                rootkitStatus.className = rootkitCount > 0 ? "font-semibold text-sm text-purple-400" : "font-semibold text-sm text-green-400";
+                rootkitBadge.className = rootkitCount > 0 ? "px-2 py-1 rounded text-xs bg-purple-900 text-purple-300 font-mono" : "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
             }
 
-            document.getElementById('download-pdf-btn').href = `/report/download/pdf/${data.investigation_id}`;
-            document.getElementById('view-html-btn').href = `/report/view/html/${data.investigation_id}`;
-            document.getElementById('download-json-btn').href = `/report/download/json/${data.investigation_id}`;
+            const yaraStatus = document.getElementById('res-yara-status');
+            const yaraBadge = document.getElementById('res-yara-badge');
+            if (data.indicators && data.indicators.yara_status) {
+                yaraStatus.innerText = data.indicators.yara_status;
+                yaraBadge.innerText = data.indicators.yara_badge;
+                yaraStatus.className = yaraCount > 0 ? "font-semibold text-sm text-red-400" : "font-semibold text-sm text-green-400";
+                yaraBadge.className = yaraCount > 0 ? "px-2 py-1 rounded text-xs bg-red-900 text-red-300 font-mono" : "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+            }
+
+            const mitigationStatus = document.getElementById('res-mitigation-status');
+            const mitigationBadge = document.getElementById('res-mitigation-badge');
+            if (data.indicators && data.indicators.mitigation_status) {
+                mitigationStatus.innerText = data.indicators.mitigation_status;
+                mitigationBadge.innerText = data.indicators.mitigation_badge;
+                mitigationStatus.className = "font-semibold text-sm text-blue-400";
+                mitigationBadge.className = "px-2 py-1 rounded text-xs bg-blue-900 text-blue-300 font-mono";
+            }
+
+            const invId = data.investigation_id;
+            if (invId) {
+                const prefix = isDemo ? "DEMO_" : "";
+                const pdfBtn = document.getElementById('download-pdf-btn');
+                const htmlBtn = document.getElementById('view-html-btn');
+                const downloadHtmlBtn = document.getElementById('download-html-btn');
+                const jsonBtn = document.getElementById('download-json-btn');
+                
+                pdfBtn.href = `/report/download/pdf/${invId}`;
+                pdfBtn.setAttribute('download', `COMPY_${prefix}${invId}_Analysis_Report.pdf`);
+                
+                htmlBtn.href = `/report/view/html/${invId}`;
+                htmlBtn.target = '_blank';
+                htmlBtn.rel = 'noopener noreferrer';
+                
+                if (downloadHtmlBtn) {
+                    downloadHtmlBtn.href = `/report/download/html/${invId}`;
+                    downloadHtmlBtn.setAttribute('download', `COMPY_${prefix}${invId}_Analysis_Report.html`);
+                }
+                
+                jsonBtn.href = `/report/download/json/${invId}`;
+                jsonBtn.setAttribute('download', `COMPY_${prefix}${invId}_Analysis_Report.json`);
+                
+                document.getElementById('result-actions').classList.remove('hidden');
+            }
         }
     </script>
 </body>

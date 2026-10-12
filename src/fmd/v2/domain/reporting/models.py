@@ -11,21 +11,21 @@ class ExaminerInfo(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: str = Field(default="[Examiner Name Not Provided]")
     designation: str = Field(default="Digital Forensics & Incident Response Analyst")
-    agency: str = Field(default="State Cyber Forensic Laboratory")
-    id: str = Field(default="FSL-DFIR-OFFICER-01")
+    agency: str = Field(default="Digital Forensics Laboratory")
+    id: str = Field(default="DFIR-ANALYST-01")
     phone: Optional[str] = None
     email: Optional[str] = None
 
 class CaseInfo(BaseModel):
     model_config = ConfigDict(extra="allow")
     id: str
-    agency: str = Field(default="Cyber Crime Police Division")
-    classification: str = Field(default="CONFIDENTIAL // LAW ENFORCEMENT & JUDICIAL PROCEEDINGS")
+    agency: str = Field(default="Digital Forensics Laboratory")
+    classification: str = Field(default="CONFIDENTIAL // DIGITAL FORENSIC INVESTIGATION RECORD")
     examiner: ExaminerInfo = Field(default_factory=ExaminerInfo)
     report_ts_ist: str
     analysis_ts_utc: str
-    fir_number: Optional[str] = "FIR-2026-CR-904"
-    investigating_officer: Optional[str] = "Inspector Rajesh Kumar"
+    fir_number: Optional[str] = None
+    investigating_officer: Optional[str] = None
 
 class EvidenceInfo(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -217,4 +217,10 @@ class ForensicReportModel(BaseModel):
     candidate_worksheet: Optional[List[CandidateWorksheetItem]] = None
     custody: List[CustodyRecord] = Field(default_factory=list)
     ledger: List[LedgerRecord] = Field(default_factory=list)
+    report_integrity_seal: Optional[List[LedgerRecord]] = None
+    yara_scans: List[Dict[str, Any]] = Field(default_factory=list)
+    mitigation_guidance: List[Dict[str, Any]] = Field(default_factory=list)
     limitations: List[str] = Field(default_factory=list)
+    static_analysis: Optional[Dict[str, Any]] = None
+    ml_analysis: Optional[Dict[str, Any]] = None
+    process_summary: Optional[Dict[str, Any]] = None

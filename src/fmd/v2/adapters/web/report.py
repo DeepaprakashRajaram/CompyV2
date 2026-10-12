@@ -16,7 +16,7 @@ def generate_forensic_report(
     output_path: str
 ):
     """
-    Generates a CERT-In / Indian Evidence Act Section 65B compliant forensic report
+    Generates a digital forensic artifact analysis report
     featuring comprehensive Parent-PID and Rootkit (DKOM) analysis.
     """
     doc = SimpleDocTemplate(
@@ -59,17 +59,17 @@ def generate_forensic_report(
     # ---------------------------------------------------------
     # HEADER
     # ---------------------------------------------------------
-    elements.append(Paragraph("<b>CONFIDENTIAL - FOR LAW ENFORCEMENT & JUDICIAL PROCEEDINGS ONLY</b>", alert_style))
+    elements.append(Paragraph("<b>CONFIDENTIAL - FORENSIC EXAMINATION RECORD</b>", alert_style))
     elements.append(Spacer(1, 0.2 * inch))
     
     elements.append(Paragraph("DIGITAL FORENSIC EXAMINATION REPORT", title_style))
     elements.append(Spacer(1, 0.05 * inch))
-    elements.append(Paragraph("<para align=center>Prepared under Section 45 & 65B of the Indian Evidence Act, 1872</para>", normal_style))
+    elements.append(Paragraph("<para align=center>Automated Memory Forensic Analysis</para>", normal_style))
     elements.append(Spacer(1, 0.2 * inch))
     
     meta_data = [
         ["Investigation ID", dossier.investigation_id, "Date of Report", datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')],
-        ["Forensic Engine", "Compy V2 (FMD-Engine)", "Standard", "CERT-In Incident Guidelines / IEA 65B"]
+        ["Forensic Engine", "Compy V2 (FMD-Engine)", "Standard", "Deterministic Memory Forensics"]
     ]
     meta_table = Table(meta_data, colWidths=[1.8 * inch, 2.0 * inch, 1.4 * inch, 2.0 * inch])
     meta_table.setStyle(TableStyle([
@@ -101,7 +101,7 @@ def generate_forensic_report(
         status_banner = "<b>VERDICT: MALICIOUS THREAT DETECTED (TRUE)</b>"
         b_color = colors.HexColor("#c0392b")
     elif status_val == "FALSE":
-        status_banner = "<b>VERDICT: SYSTEM CLEAN - NO THREATS FOUND (FALSE)</b>"
+        status_banner = "<b>VERDICT: NO THREATS DETECTED (EXECUTED SCOPE)</b>"
         b_color = colors.HexColor("#27ae60")
     else:
         status_banner = "<b>VERDICT: INCONCLUSIVE / UNKNOWN (FURTHER SYMBOLS REQUIRED)</b>"
@@ -157,7 +157,7 @@ def generate_forensic_report(
         ))
         elements.append(Spacer(1, 0.1 * inch))
         
-        ppid_headers = ["PID", "Process Name", "PPID", "Parent Name", "Category", "Confidence"]
+        ppid_headers = ["PID", "Process Name", "PPID", "Parent Name", "Category", "Triage Score"]
         ppid_rows = [ppid_headers]
         for obs in ppid_anomalies:
             ppid_rows.append([
@@ -166,7 +166,7 @@ def generate_forensic_report(
                 str(getattr(obs, "ppid", "-")),
                 str(getattr(obs, "actual_parent", "-")),
                 str(getattr(obs, "anomaly_category", "-")),
-                f"{int(obs.confidence * 100)}%"
+                f"{obs.confidence:.2f}"
             ])
         
         ppid_table = Table(ppid_rows, colWidths=[0.8 * inch, 1.8 * inch, 0.8 * inch, 1.5 * inch, 1.5 * inch, 0.8 * inch])
@@ -201,7 +201,7 @@ def generate_forensic_report(
         ))
         elements.append(Spacer(1, 0.1 * inch))
         
-        rootkit_headers = ["PID", "Process Name", "PPID", "Active Threads", "Detection Status", "Confidence"]
+        rootkit_headers = ["PID", "Process Name", "PPID", "Active Threads", "Detection Status", "Triage Score"]
         rootkit_rows = [rootkit_headers]
         for obs in hidden_anomalies:
             rootkit_rows.append([
@@ -210,7 +210,7 @@ def generate_forensic_report(
                 str(getattr(obs, "ppid", "-")),
                 str(getattr(obs, "thread_count", "-")),
                 "UNLINKED (DKOM)",
-                f"{int(obs.confidence * 100)}%"
+                f"{obs.confidence:.2f}"
             ])
             
         rootkit_table = Table(rootkit_rows, colWidths=[0.8 * inch, 2.0 * inch, 0.8 * inch, 1.2 * inch, 1.6 * inch, 0.8 * inch])
@@ -241,36 +241,106 @@ def generate_forensic_report(
     else:
         elements.append(Paragraph("No verification candidates required auditing.", normal_style))
 
-    if dossier.capability_failures:
+    # ---------------------------------------------------------
+    # 6. YARA SIGNATURE MATCHES
+    # ---------------------------------------------------------
+    elements.append(Paragraph("6. YARA Signature Rule Matches", h1_style))
+    yara_matches = getattr(dossier, "yara_anomalies", [])
+    if yara_matches:
+        elements.append(Paragraph(
+            "<b>ALERT:</b> The following validated YARA signatures matched against memory segments or process command-lines:",
+            alert_style
+        ))
         elements.append(Spacer(1, 0.1 * inch))
-        elements.append(Paragraph("<b>Note on Forensic Constraints:</b> Certain capabilities could not be executed due to localized symbol constraints:", normal_style))
-        for cf in dossier.capability_failures:
-            elements.append(Paragraph(f"- Failure: {cf.failure_reason if hasattr(cf, 'failure_reason') else cf.status}", normal_style))
+        yara_headers = ["Rule Name", "PID", "Target", "Namespace", "Confidence"]
+        yara_rows = [yara_headers]
+        for ym in yara_matches:
+            yara_rows.append([
+                str(getattr(ym, "rule_name", "-")),
+                str(getattr(ym, "process_pid", "-") or "-"),
+                str(getattr(ym, "target_type", "-")),
+                str(getattr(ym, "namespace", "-")),
+                f"{getattr(ym, 'confidence', 1.0):.2f}"
+            ])
+        yara_table = Table(yara_rows, colWidths=[2.2 * inch, 0.8 * inch, 1.8 * inch, 1.4 * inch, 1.0 * inch])
+        yara_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#d35400")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#bdc3c7")),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#fef5e7"))
+        ]))
+        elements.append(yara_table)
+    else:
+        elements.append(Paragraph(
+            "<b>[PASS]</b> No active YARA memory injection or cradle signatures matched against target memory artifacts.",
+            pass_style
+        ))
+    elements.append(Spacer(1, 0.25 * inch))
 
     # ---------------------------------------------------------
-    # 6. SECTION 65B CERTIFICATE
+    # 7. MITIGATION GUIDANCE
+    # ---------------------------------------------------------
+    elements.append(Paragraph("7. Evidence-Backed Mitigation Guidance", h1_style))
+    mitigations = getattr(dossier, "mitigation_recommendations", [])
+    if mitigations:
+        elements.append(Paragraph(
+            "<b>RECOMMENDED ACTIONS:</b> Prioritized, non-destructive mitigation guidance based on verified forensic findings:",
+            normal_style
+        ))
+        elements.append(Spacer(1, 0.1 * inch))
+        mit_headers = ["Priority", "Action Type", "Title", "Human Auth", "Prerequisites"]
+        mit_rows = [mit_headers]
+        for m in mitigations:
+            mit_rows.append([
+                str(getattr(m, "priority", "-")),
+                str(getattr(m, "action_type", "-")),
+                Paragraph(str(getattr(m, "title", "-")), normal_style),
+                "YES" if getattr(m, "requires_human_auth", True) else "NO",
+                Paragraph(str(getattr(m, "prerequisites", "-")), normal_style)
+            ])
+        mit_table = Table(mit_rows, colWidths=[1.0 * inch, 1.2 * inch, 2.2 * inch, 0.8 * inch, 2.0 * inch])
+        mit_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#2980b9")),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#bdc3c7")),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor("#ebf5fb"))
+        ]))
+        elements.append(mit_table)
+    else:
+        elements.append(Paragraph(
+            "No containment or remediation actions required.",
+            normal_style
+        ))
+    elements.append(Spacer(1, 0.25 * inch))
+
+    # ---------------------------------------------------------
+    # 8. TECHNICAL EXAMINATION STATEMENT & DISCLAIMER
     # ---------------------------------------------------------
     elements.append(PageBreak())
-    elements.append(Paragraph("CERTIFICATE UNDER SECTION 65B(4) OF THE INDIAN EVIDENCE ACT, 1872", h2_style))
-    elements.append(Spacer(1, 0.3 * inch))
+    elements.append(Paragraph("8. Technical Examination Statement & Admissibility Notice", h2_style))
+    elements.append(Spacer(1, 0.2 * inch))
     
     cert_text = (
-        "I, [Authorized Examiner Name], Cyber Forensic Analyst, hereby certify that the electronic record "
-        f"derived from memory image '{file_name}' (SHA-256 Hash: {file_hash}) was examined using the "
-        "Compsognathus Forensic Engine. The workstation utilized was operating properly at all material times, "
-        "and the output herein was generated in the ordinary course of lawful cyber forensic examination. "
-        "To the best of my knowledge and professional belief, all conditions prescribed under Section 65B(2) "
-        "of the Indian Evidence Act, 1872 have been strictly fulfilled."
+        "This document represents automated technical reasoning generated by the Compsognathus Forensic Engine "
+        f"operating upon memory image artifact '{file_name}' (SHA-256 Hash: {file_hash}). "
+        "The software does not establish legal admissibility, prove physical acquisition provenance, or independently satisfy "
+        "statutory chain of custody requirements. Formal legal admissibility (such as under Section 65B/45 of the Indian Evidence Act, "
+        "Federal Rule of Evidence 902, or equivalent jurisdictional standards) requires physical acquisition verification and "
+        "attestation by authorized human forensic personnel."
     )
     elements.append(Paragraph(cert_text, normal_style))
-    elements.append(Spacer(1, 0.8 * inch))
+    elements.append(Spacer(1, 0.4 * inch))
     
-    elements.append(Paragraph("______________________________", normal_style))
-    elements.append(Paragraph("<b>Signature of Authorized Examiner</b>", bold_style))
-    elements.append(Paragraph("Name: [Investigating Officer / Forensic Expert]", normal_style))
-    elements.append(Paragraph("Designation: Cyber Forensic Examiner", normal_style))
-    elements.append(Paragraph("Forensic Laboratory / Agency: [State / Central FSL]", normal_style))
-    elements.append(Paragraph(f"Date: {datetime.now().strftime('%Y-%m-%d')}", normal_style))
+    elements.append(Paragraph("<b>Report Attestation:</b> Automated Software Generation. No human operator credentials supplied.", normal_style))
+    elements.append(Paragraph(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}", normal_style))
     
     doc.build(elements)
     return output_path

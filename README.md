@@ -1,91 +1,136 @@
-# Compsognathus (Compy)
+# Compsognathus (Compy) V2
 
-**Advanced Fileless Malware Forensic Engine (V2.0)**
+**Practical Fileless Malware Memory Forensics & Detection System**
 
-Compsognathus (Compy) is a next-generation forensic engine designed to detect, analyze, and map fileless malware behavior in system memory. By leveraging an immutable Evidence Ledger, deterministic Tri-State logic, and a strict Hexagonal Architecture, Compy provides mathematically rigorous forensic investigations.
+Compsognathus (Compy) is an evidence-backed, production-grade memory forensics application engineered to detect, classify, and mitigate fileless malware in volatile system memory (RAM). Powered by **Volatility 3** and **YARA**, Compy integrates deep memory inspection with a strictly immutable Evidence Ledger, deterministic Tri-State verdict logic, hexagonal architecture, and an automated forensic reporting engine.
 
-## 1. Problem Statement
-Traditional memory forensics often relies on ad-hoc plugin outputs and probabilistic heuristics that can lead to contradictory conclusions or silent failures (e.g., when debugging symbols are missing). Compy solves this by elevating memory analysis into a strongly-typed, deterministic domain model where every forensic capability is strictly verified, and missing dependencies result in explicit failure paths rather than false negatives.
+---
 
-## 2. Architecture
-Compy V2 implements a strict **Hexagonal Architecture (Ports and Adapters)**:
-- **Core Domain:** Immutable Evidence Ledger, Domain Nodes, Corroboration, and Verification.
-- **Application Layer:** Isolated Use Cases (e.g., `AnalyzeMemoryUseCase`) and the `SessionCoordinator`.
-- **Adapters:** External integrations (Volatility 3, CLI, Web App API).
+## 1. Core Architecture & Philosophy
 
-## 3. Current Capabilities
-- **Status:** Phase 2 Complete (Advanced Detectors & DFIR Reporting Module).
-- **Supported:**
-  - **Memory Injection Detection:** RWX VADs, unbacked executable code memory, reflective loading.
-  - **Parent-PID / Process Lineage Anomaly Detection:** Office/spoolsv exploit spawns, PPID spoofing (T1134.004), rogue svchost/lsass/csrss parentage, masquerading (T1036).
-  - **Hidden Process & Kernel Rootkit Detection:** Cross-view matrix comparing `ActiveProcessLinks` (pslist) against memory pool carving (psscan), PspCidTable, and handle tables; unlinked DKOM processes (T1014); SSDT/IDT/IRP hook checks.
-  - **Hexagonal DFIR Report Generator:** Industry-grade, 8–19 page forensic report matching Mandiant / CrowdStrike standards, strictly compliant with Sections 45 & 65B of the Indian Evidence Act, 1872 and CERT-In Incident Guidelines.
-  - **Evidence Integrity:** Immutable SHA-256 hash-chained ledger, Tri-State logic (DETECTED / NOT DETECTED / UNKNOWN) with explicit verification worksheets.
-  - **100% Offline Generation:** Embedded local vector SVG charts (severity donut, risk gauge, process tree, QR code), zero CDN/network dependencies.
+Compy V2 adheres strictly to a **Hexagonal Architecture (Ports and Adapters)**:
+- **Core Domain:** Immutable Evidence Ledger, Domain Nodes, Corroboration Engine, Tri-State Verdict Logic (`DETECTED`, `NOT DETECTED`, `UNKNOWN`), and Evidence-Backed Mitigation Engine.
+- **Application Layer:** Isolated Use Cases (`AnalyzeMemoryUseCase`) and the `SessionCoordinator`.
+- **Adapters (Inbound):** CLI (`compy_cli.py`), Web Application Dashboard (`app.py`), and standalone Report CLI (`generate_report.py`).
+- **Adapters (Outbound):** Volatility 3 Collector (`VolatilityCollector`), Multi-Engine YARA Scanner (`YaraScanner`), and DFIR Multi-Format Renderer (`HtmlToPdfRenderer` / PyMuPDF / WeasyPrint).
 
-## 4. Installation
-Compy requires Python 3.10+.
+### Design Invariants
+1. **Offline & Fail-Closed:** Strict `LOCAL_ONLY + FAIL_IF_MISSING` symbol resolution policy. Compy never connects to the internet or downloads symbols dynamically during forensic evaluation. If required symbols or plugins are missing, the system emits an explicit `UNAVAILABLE` or `PARTIAL` status—never a false negative.
+2. **Immutable Audit Trail:** Every ingested artifact and pipeline outcome is cryptographically sealed into an SHA-256 hash-chained ledger.
+3. **Evidence-Linked Mitigation:** Containment recommendations strictly trace back to verified findings, prioritizing non-destructive steps and enforcing human authorization gates.
+
+---
+
+## 2. Key Capabilities & Detectors
+
+| Capability | Module / Detector | Description | MITRE ATT&CK |
+| :--- | :--- | :--- | :--- |
+| **Process Lineage Analysis** | `ppid_tree_anomaly_detector` | Audits parent-child relationships, identifies anomalous exploit spawns (e.g. `winword.exe` spawning `powershell.exe`), and flags PPID spoofing. | T1134.004, T1059 |
+| **Rootkit & DKOM Detection** | `rootkit_dkom_detector` | Performs cross-view differential analysis between active linked processes (`pslist` / `ActiveProcessLinks`) and physical memory pool carving (`psscan`). Discovers unlinked processes. | T1014 |
+| **YARA Signature Scanning** | `yara_signature_scanner` | Multi-engine YARA scanning across extracted memory VAD injections and process command lines. Features native `yara-python` acceleration with automatic pure-Python fallback. | T1055, T1059.001 |
+| **Memory Injection Scanner** | `vad_injection_scanner` | Inspects Virtual Address Descriptors for unbacked executable memory (`PAGE_EXECUTE_READWRITE`), reflective DLL loading, and shellcode execution. | T1055.001 |
+| **Mitigation Guidance** | `MitigationEngine` | Generates prioritized (`IMMEDIATE`, `SHORT_TERM`, `STRATEGIC`), actionable containment procedures linked to verified evidence nodes. | Non-destructive DFIR |
+| **DFIR Report Generation** | `HtmlToPdfRenderer` | Produces comprehensive multi-page PDF, HTML, and JSON reports with embedded vector charts, IOC appendices, and statutory certificates. | ISO/IEC 27037, IEA 65B |
+
+---
+
+## 3. Installation & Prerequisites
+
+Compy requires **Python 3.10+**.
 
 ```powershell
+# Clone or navigate to the repository
 git clone https://github.com/DeepaprakashRajaram/CompyV2.git
 cd CompyV2
+
+# Set up Python virtual environment
 python -m venv .venv
 .\.venv\Scripts\activate
+
+# Install dependencies in editable mode
 pip install -e .
 ```
 
-## 5. Web Application Interface
-Compy includes a web dashboard providing instant memory analysis and PDF/HTML/JSON report downloads:
+---
+
+## 4. CLI Usage
+
+Compy provides a unified command-line interface (`compy_cli.py`) supporting both real volatile memory dumps and synthetic demonstration runs.
+
+### Real Memory Dump Analysis
+```powershell
+python src/fmd/v2/adapters/cli/compy_cli.py C:\Path\To\dump.raw `
+    --os windows `
+    --yara-rules rules/yara `
+    -o forensic_report.pdf `
+    --html forensic_report.html `
+    --json forensic_report.json
+```
+
+### Synthetic Pipeline Demonstration
+Run the pipeline against built-in synthetic fixtures to verify reporting and detector reasoning:
+```powershell
+python src/fmd/v2/adapters/cli/compy_cli.py --demo `
+    -o sample_report.pdf `
+    --html sample_report.html `
+    --json sample_report.json
+```
+
+### Standalone DFIR Report Compilation
+Render high-fidelity PDF and HTML reports directly from any exported forensic JSON document:
+```powershell
+python generate_report.py sample_report.json -o custom_report.pdf --html custom_report.html
+```
+
+---
+
+## 5. Web Application Dashboard
+
+Compy features an interactive web interface offering real-time memory analysis, progress tracking, live detector card telemetry, and one-click report downloads.
+
+### Starting the Web Server
+Run using the provided batch launcher or directly via Uvicorn:
+```powershell
+# Option A: Run the batch script
+.\start_web_app.bat
+
+# Option B: Run via uvicorn directly
+python -m uvicorn fmd.v2.adapters.web.app:app --host 127.0.0.1 --port 8085
+```
+
+- **Dashboard UI:** Open your browser to `http://localhost:8085`
+- **Instant Demo:** Click **Run Instant Demo Analysis** on the home page to test all four indicator modules in seconds.
+- **Sample DFIR Report Preview:** Access the pre-compiled forensic report at `http://localhost:8085/report/sample`
+- **Upload Analysis:** Upload `.raw`, `.dmp`, `.vmem`, or `.img` memory artifacts for automated analysis.
+
+---
+
+## 6. YARA Signature Rules
+
+Compy ships with built-in YARA detection rules in `rules/yara/`:
+- `memory_injection.yar`: Identifies Cobalt Strike Beacon reflectors, Meterpreter reverse TCP stagers, process hollowing loaders, and early bird injection primitives.
+- `download_cradles.yar`: Flags fileless download cradles, hidden PowerShell execution flags (`-W Hidden -Enc`), Mshta JavaScript execution, and certutil encoded payload decoders.
+
+Custom rule directories can be passed to the CLI via `--yara-rules <path>` or configured in the engine.
+
+---
+
+## 7. Volatility 3 & Symbol Policy
+
+Compy enforces a strict **`LOCAL_ONLY`** symbol policy:
+- Compy will **never** connect to Microsoft Symbol Servers or external networks during forensic processing.
+- Required Windows symbols must be populated in the local Volatility symbol cache directory ahead of time.
+- If required symbols are missing, Compy terminates the affected detector gracefully and reports `CapabilityStatus.UNAVAILABLE`, ensuring no unverified assumptions or false negatives are produced.
+
+---
+
+## 8. Verification & Test Suite
+
+Compy includes an extensive test suite verifying hexagonal contracts, Volatility adapters, YARA scanners, mitigation generation, and DFIR report compilation:
 
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn fmd.v2.adapters.web.app:app --host 0.0.0.0 --port 8085
-```
-- Open your browser at: `http://localhost:8085`
-- Preview the 19-page DFIR sample report: `http://localhost:8085/report/sample`
-
-## 6. Standalone DFIR Report Generator CLI
-Generate an evidence-grade forensic PDF or HTML document from any validated forensic JSON dataset:
-
-```powershell
-# Generate PDF and HTML reports from sample forensic data
-python generate_report.py sample_report.json -o sample_report.pdf --html sample_report.html
+# Run the entire V2 test suite
+python -m pytest tests/v2
 ```
 
-Output includes:
-1. Cover Page with QR Code, Classification Banner, and Risk Gauge.
-2. Document Control, Distribution, and Table of Contents.
-3. Executive Summary with Severity Donut Chart and Key Findings.
-4. Scope, Objectives & Evidence Cryptographic Hashes (SHA-256/MD5).
-5. Methodology & Legal Standards (NIST SP 800-86, ISO/IEC 27037:2012, IEA 65B).
-6. Findings Overview Matrix.
-7. Process Tree Analysis with Vector Diagram & Anomaly Explanations.
-8. Hidden Process & Kernel Rootkit DKOM Cross-View Comparison Matrix.
-9. Detailed Findings (Hex dumps, Disassembly, YARA matches, IOCs, Remediation).
-10. MITRE ATT&CK Enterprise Matrix Mapping.
-11. Consolidated Indicators of Compromise (IOC) Appendix.
-12. Attack Timeline.
-13. Forensic Risk Scoring Methodology Breakdown.
-14. Prioritized Recommendations & Action Plan.
-15. Limitations & Assumptions (Smear, Paged Memory, UNKNOWN semantics).
-16. Chain of Custody & Hash-Chained Evidence Ledger.
-17. Forensic Glossary.
-18. Statutory Certificate under Section 65B(4) & Section 45, Indian Evidence Act, 1872.
-
-## 7. Volatility 3 & Symbol Safety Policy
-Compy enforces a strict **`LOCAL_ONLY + FAIL_IF_MISSING`** policy for Volatility 3.
-- Compy will **never** silently download forensic symbols from the internet.
-- Missing required symbols cause a controlled capability failure (`CapabilityStatus.UNAVAILABLE`).
-- Users must manually provision compatible symbols to their local Volatility cache legally and securely.
-- We do not distribute raw memory images or symbols in this repository.
-
-## 8. Testing
-- **Unit & Integration Tests:** Execute via `pytest`:
-```powershell
-.\.venv\Scripts\pytest.exe
-```
-All 27 automated tests validate core reasoning, detectors, reporting contracts, Pydantic schemas, and PDF compilation.
-
-## 9. Safety Boundaries
-- **Immutability:** The Evidence Ledger is append-only and cryptographically chained.
-- **Side-Effects:** Volatility is strictly executed offline.
-- **Determinism:** `Investigation ID` generation is mathematically bound to the run identity and artifact hash.
+All 72 tests execute deterministically offline without network calls or external dependencies.

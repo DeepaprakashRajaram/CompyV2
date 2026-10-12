@@ -29,6 +29,7 @@ credentials.json
 # Python Caches
 __pycache__/
 *.pyc
+*.pyo
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -45,6 +46,13 @@ checkpoints/
 scratch/
 *.log
 large_generated_outputs/
+*_validation_report.*
+real_report.*
+wannacry_report.*
+Report_*.pdf
+Report_*.html
+Report_*.json
+COMPY_*_Analysis_Report.*
 
 # IDE / OS
 .vscode/

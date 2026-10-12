@@ -42,7 +42,7 @@ class EmptyDetector(IDetector):
         from fmd.v2.adapters.providers.mock_detector import MockDetectorResult
         return MockDetectorResult(_status=CapabilityStatus.SUCCESS, _observations=[])
 
-def build_test_app(detectors: List[IDetector]) -> AnalyzeMemoryUseCase:
+def build_test_app(detectors: List[IDetector], verifier=None) -> AnalyzeMemoryUseCase:
     """Helper to inject custom test detectors."""
     def coordinator_factory() -> SessionCoordinator:
         ledger = EvidenceLedger()
@@ -53,7 +53,7 @@ def build_test_app(detectors: List[IDetector]) -> AnalyzeMemoryUseCase:
             ledger_query=ledger,
             graph_query=ledger,
             corroborator=DeterministicCorroborator(),
-            verifier=StrictVerifier(),
+            verifier=verifier or StrictVerifier(),
             governance=CLIGovernanceGate()
         )
     return AnalyzeMemoryUseCase(coordinator_factory=coordinator_factory)
@@ -82,9 +82,12 @@ def test_coordinator_internal_state():
     coordinator = app.coordinator_factory()
     dossier = coordinator.run_analysis(req.target_path, req.session_timestamp)
     
-    # 1. Did ledger capture the nodes? (3 procs + 2 regions = 5 nodes)
+    # 1. Did ledger capture the nodes? (3 procs + 2 regions = 5 nodes, plus scan metadata)
     nodes = coordinator.ledger_query.get_all_nodes()
-    assert len(nodes) == 5
+    proc_nodes = [n for n in nodes if n.node_type == "Process"]
+    region_nodes = [n for n in nodes if n.node_type == "MemoryRegion"]
+    assert len(proc_nodes) == 3
+    assert len(region_nodes) == 2
     
     # 2. Did Graph capture the relationship?
     # Find the process node with PID 1000 to get its generated UUIDv5 ID
@@ -150,4 +153,83 @@ def test_missing_evidence_unknown_semantics():
     # Status should be FALSE (benign), not UNKNOWN, because all detectors succeeded but found nothing.
     assert dossier.system_status == TriState.FALSE
     assert len(dossier.candidates) == 0
-    assert len(dossier.capability_failures) == 0
+
+def test_one_detector_unavailable_while_another_produces_findings():
+    """When one detector is UNAVAILABLE while another finds anomalies, findings and failures are both preserved."""
+    from fmd.v2.domain.contracts import IDetector, IDetectorResult, EvidenceId, ProviderCapability
+    from fmd.v2.adapters.providers.mock_detector import MockDetectorResult, MockObservation
+    
+    class UnavailableDetector(IDetector):
+        def provider_id(self) -> ProviderId:
+            return ProviderId("unavailable_detector")
+        def required_capabilities(self):
+            return frozenset([ProviderCapability.PROCESS_SCAN])
+        def evaluate(self, ledger, graph, content=None) -> IDetectorResult:
+            return MockDetectorResult(
+                _status=CapabilityStatus.UNAVAILABLE,
+                _observations=[],
+                _failure_reason="Required capability PROCESS_SCAN was not executed."
+            )
+
+    class MaliciousDetector(IDetector):
+        def provider_id(self) -> ProviderId:
+            return ProviderId("malicious_detector")
+        def required_capabilities(self):
+            return frozenset([ProviderCapability.PROCESS_LIST])
+        def evaluate(self, ledger, graph, content=None) -> IDetectorResult:
+            obs = MockObservation(
+                _detector_id=self.provider_id(),
+                _target=EvidenceId("1"),
+                description="Confirmed code injection",
+                confidence=0.9
+            )
+            return MockDetectorResult(_status=CapabilityStatus.SUCCESS, _observations=[obs])
+
+    from fmd.v2.domain.reasoning.verification import VerifiedConclusion
+    class PermissiveVerifier(StrictVerifier):
+        def verify(self, candidate, ledger, graph):
+            return VerifiedConclusion(_status=TriState.TRUE, _rationale="Verified malicious findings.")
+
+    app = build_test_app(detectors=[UnavailableDetector(), MaliciousDetector()], verifier=PermissiveVerifier())
+    req = AnalyzeMemoryRequest(target_path="mock://test.raw", session_timestamp=datetime.now(timezone.utc))
+    dossier = app.execute(req)
+
+    # Finding is preserved
+    assert dossier.system_status == TriState.TRUE
+    assert len(dossier.candidates) == 1
+    # Failure is also preserved (not swallowed)
+    assert len(dossier.capability_failures) == 1
+    assert dossier.capability_failures[0].status == CapabilityStatus.UNAVAILABLE
+    assert "PROCESS_SCAN" in dossier.capability_failures[0].failure_reason
+
+def test_coordinator_preserves_unavailable_unknown_state_never_clean():
+    """Incomplete/unavailable evidence must preserve UNKNOWN status and never convert to clean FALSE."""
+    from fmd.v2.domain.contracts import IDetector, IDetectorResult, ProviderCapability
+    from fmd.v2.adapters.providers.mock_detector import MockDetectorResult
+    from fmd.v2.adapters.reporting.mapper import dossier_to_report_dict
+    
+    class UnavailableDetector(IDetector):
+        def provider_id(self) -> ProviderId:
+            return ProviderId("unavailable_detector")
+        def required_capabilities(self):
+            return frozenset()
+        def evaluate(self, ledger, graph, content=None) -> IDetectorResult:
+            return MockDetectorResult(
+                _status=CapabilityStatus.UNAVAILABLE,
+                _observations=[],
+                _failure_reason="Detector views missing."
+            )
+
+    app = build_test_app(detectors=[EmptyDetector(), UnavailableDetector()])
+    req = AnalyzeMemoryRequest(target_path="mock://test.raw", session_timestamp=datetime.now(timezone.utc))
+    dossier = app.execute(req)
+
+    # Must NOT become clean FALSE
+    assert dossier.system_status == TriState.UNKNOWN
+    assert len(dossier.capability_failures) == 1
+    assert dossier.capability_failures[0].status == CapabilityStatus.UNAVAILABLE
+
+    # Report dict must NOT report NOT DETECTED
+    rep = dossier_to_report_dict(dossier, "test.raw", "abcd"*16, "4 GB", False)
+    assert rep["summary"]["verdict"] in ("UNKNOWN", "PARTIAL")
+    assert rep["summary"]["verdict"] != "NOT DETECTED"

@@ -19,5 +19,5 @@ echo Press Ctrl+C to stop the server.
 echo ==============================================
 echo.
 
-python -m uvicorn fmd.v2.adapters.web.app:app --host 0.0.0.0 --port 8085
+python -m uvicorn fmd.v2.adapters.web.app:app --host 127.0.0.1 --port 8085
 pause

@@ -20,7 +20,7 @@ from fmd.v2.adapters.reporting.html_to_pdf_renderer import HtmlToPdfRenderer
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compy V2 Digital Forensic Report Generator (CERT-In / IEA Sec 65B Compliant)"
+        description="Compy V2 Digital Forensic Report Generator (DFIR Report Standards)"
     )
     parser.add_argument("input_json", help="Path to validated forensic JSON file (e.g. sample_report.json)")
     parser.add_argument("-o", "--output", default="report.pdf", help="Output PDF file path (default: report.pdf)")
@@ -41,7 +41,7 @@ def main():
         
     print("=" * 65)
     print(" COMPY V2 FORENSIC ENGINE // DFIR REPORT GENERATOR")
-    print(" Standard: CERT-In Guidelines / IEA Sec 45 & 65B Compliance")
+    print(" Standard: DFIR Report Generation & Technical Findings Declaration")
     print("=" * 65)
     print(f"[*] Ingesting forensic data: {json_path.name}")
     print(f"[*] Case ID: {report_data.get('case', {}).get('id', 'N/A')}")

@@ -47,9 +47,8 @@ def test_process_tree_svchost_masquerade(test_provenance):
 
     result = detector.evaluate(ledger, ledger)
     assert result.status == CapabilityStatus.SUCCESS
-    assert len(result.observations) == 2  # Critical PPID Anomaly + Svchost Masquerade
-    obs_categories = [o.anomaly_category for o in result.observations]
-    assert "SYSTEM_MASQUERADE" in obs_categories or "PPID_SPOOFING" in obs_categories
+    assert len(result.observations) == 1  # Exactly one observation (no double-counting)
+    assert result.observations[0].anomaly_category == "SYSTEM_MASQUERADE"
 
 def test_process_tree_exploit_spawn(test_provenance):
     ledger = EvidenceLedger()

@@ -80,6 +80,9 @@ class ProviderCapability(Enum):
     MEMORY_CONTENT = "MEMORY_CONTENT"
     HANDLES = "HANDLES"
     MODULES = "MODULES"
+    INJECTED_CODE = "INJECTED_CODE"
+    COMMAND_LINE = "COMMAND_LINE"
+    YARA_SCAN = "YARA_SCAN"
 
 class IProviderResult(Protocol):
     @property
