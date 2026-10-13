@@ -1,235 +1,599 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compy V2 - Memory Forensics &amp; DFIR Engine</title>
+    <title>Compy V2 — Forensic Posture &amp; DFIR Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    },
                     colors: {
-                        brand: {
-                            900: '#0f172a',
-                            800: '#1e293b',
-                            700: '#334155',
-                            accent: '#3b82f6'
+                        zinc: {
+                            50: '#fafafa',
+                            100: '#f4f4f5',
+                            150: '#ececee',
+                            200: '#e4e4e7',
+                            300: '#d4d4d8',
+                            400: '#a1a1aa',
+                            500: '#71717a',
+                            600: '#52525b',
+                            700: '#3f3f46',
+                            800: '#27272a',
+                            900: '#18181b',
+                            950: '#09090b',
                         }
                     }
                 }
             }
         }
     </script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #0b1120; color: #f8fafc; }
-        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .spinner { animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #60a5fa; font-weight: 600; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #ffffff;
+            color: #09090b;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .surface-grid {
+            background-color: #fafafa;
+            background-image: radial-gradient(#e4e4e7 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        .spinner {
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #52525b;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+        }
+        .nav-item:hover {
+            background-color: #f4f4f5;
+            color: #09090b;
+        }
+        .nav-item.active {
+            background-color: #f4f4f5;
+            color: #09090b;
+            font-weight: 600;
+        }
+        .shadcn-card {
+            background-color: #ffffff;
+            border: 1px solid #e4e4e7;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        }
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            color: #71717a;
+            transition: all 0.15s ease;
+        }
+        .tab-btn.active {
+            background-color: #ffffff;
+            color: #09090b;
+            font-weight: 600;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0,0,0,0.04);
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex flex-col bg-white text-zinc-950 selection:bg-zinc-900 selection:text-white">
 
-    <!-- Header -->
-    <div class="text-center mb-8 w-full max-w-3xl">
-        <div class="inline-flex items-center justify-center p-4 bg-brand-800 rounded-full mb-4 shadow-lg border border-gray-700">
-            <i class="fa-solid fa-shield-halved text-4xl text-blue-500"></i>
-        </div>
-        <h1 class="text-4xl font-bold mb-2 tracking-tight">Compy V2 Forensic Engine</h1>
-        <p class="text-gray-400 text-lg mb-3">Memory Forensics, Fileless Malware Detection &amp; DFIR Forensic Reporting</p>
-        <a href="/report/sample" target="_blank" class="inline-flex items-center space-x-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-700 hover:bg-cyan-900 transition-colors">
-            <i class="fa-solid fa-file-contract"></i>
-            <span>Preview Mandiant/CrowdStrike-tier 19-Page Sample DFIR Report</span>
-            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-        </a>
-    </div>
-
-    <!-- Main Card -->
-    <div class="glass-panel w-full max-w-3xl rounded-2xl shadow-2xl p-8 relative overflow-hidden">
-        
-        <!-- Mode Tabs -->
-        <div id="mode-tabs" class="flex border-b border-gray-700 mb-6">
-            <button id="tab-demo-btn" onclick="switchMode('demo')" class="tab-btn active py-3 px-6 text-sm flex items-center space-x-2 transition-colors">
-                <i class="fa-solid fa-flask"></i>
-                <span>Synthetic Demo Mode</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/60 text-amber-300 font-mono border border-amber-700/50">DEMO</span>
-            </button>
-            <button id="tab-real-btn" onclick="switchMode('real')" class="tab-btn text-gray-400 hover:text-gray-200 py-3 px-6 text-sm flex items-center space-x-2 transition-colors">
-                <i class="fa-solid fa-microchip"></i>
-                <span>Real Forensic Analysis Mode</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300 font-mono border border-blue-700/50">REAL</span>
-            </button>
+    <!-- Top Header Bar -->
+    <header class="h-14 border-b border-zinc-200 bg-white sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6">
+        <!-- Brand Logo (Left) -->
+        <div class="flex items-center space-x-3 w-56 shrink-0">
+            <div class="w-7 h-7 rounded-md bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs">
+                <i class="fa-solid fa-shield-halved text-sm"></i>
+            </div>
+            <span class="font-bold text-sm tracking-[0.14em] text-zinc-900 uppercase">Compy V2</span>
         </div>
 
-        <!-- Step 1: Input Pane (Switched by Tabs) -->
-        <div id="step-upload" class="flex flex-col items-center justify-center">
-            
-            <!-- DEMO MODE PANEL -->
-            <div id="panel-demo" class="w-full bg-brand-800 rounded-xl p-6 border border-amber-900/50 shadow-inner">
-                <div class="p-3 bg-amber-950/40 border border-amber-700/60 rounded-lg mb-4 text-xs text-amber-300 flex items-start space-x-2">
-                    <i class="fa-solid fa-triangle-exclamation text-base mt-0.5 text-amber-400"></i>
+        <!-- Quick Command / Filter Bar (Center-Left) -->
+        <div class="flex-1 flex items-center justify-between max-w-full pl-0 md:pl-4">
+            <div onclick="focusScanInput()" class="hidden sm:flex items-center justify-between w-full max-w-md px-3 py-1.5 bg-zinc-50 hover:bg-zinc-100/80 border border-zinc-200 rounded-lg cursor-pointer transition-colors">
+                <div class="flex items-center space-x-2.5 text-zinc-400 text-xs">
+                    <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
+                    <span>Inspect target path, memory image, or run scan...</span>
+                </div>
+                <kbd class="px-1.5 py-0.5 text-[10px] font-mono font-medium text-zinc-500 bg-white border border-zinc-200 rounded shadow-2xs">⌘K</kbd>
+            </div>
+
+            <!-- Right Utilities -->
+            <div class="flex items-center space-x-3 ml-auto">
+                <a href="/report/sample" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 transition-colors shadow-2xs">
+                    <i class="fa-regular fa-file-lines text-zinc-500"></i>
+                    <span>Sample 19-Page DFIR Report</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-zinc-400"></i>
+                </a>
+                <div class="w-7 h-7 rounded-full bg-blue-100 border border-blue-200 text-blue-700 text-xs font-semibold flex items-center justify-center" title="DFIR Investigator">
+                    DF
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout Container -->
+    <div class="flex-1 flex min-h-[calc(100vh-3.5rem)]">
+
+        <!-- Left Sidebar Navigation -->
+        <aside class="w-60 shrink-0 border-r border-zinc-200 bg-white px-3 py-5 hidden md:flex flex-col justify-between select-none">
+            <div class="space-y-6">
+                <!-- POSTURE SECTION -->
+                <div>
+                    <p class="px-3 mb-2 text-[11px] font-semibold tracking-[0.08em] text-zinc-400 uppercase">Posture</p>
+                    <nav class="space-y-0.5">
+                        <button onclick="switchSection('dashboard')" id="nav-dashboard" class="nav-item active">
+                            <i class="fa-solid fa-gauge-high text-xs w-4 text-center text-zinc-500"></i>
+                            <span>Dashboard</span>
+                        </button>
+                        <button onclick="switchSection('findings')" id="nav-findings" class="nav-item">
+                            <i class="fa-solid fa-list-check text-xs w-4 text-center text-zinc-500"></i>
+                            <span>Findings</span>
+                            <span id="sidebar-findings-badge" class="ml-auto text-[11px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600">0</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- EVIDENCE SECTION -->
+                <div>
+                    <p class="px-3 mb-2 text-[11px] font-semibold tracking-[0.08em] text-zinc-400 uppercase">Evidence</p>
+                    <nav class="space-y-0.5">
+                        <button onclick="switchSection('scans')" id="nav-scans" class="nav-item">
+                            <i class="fa-solid fa-radar text-xs w-4 text-center text-zinc-500"></i>
+                            <span>Scans</span>
+                        </button>
+                        <button onclick="switchSection('reports')" id="nav-reports" class="nav-item">
+                            <i class="fa-regular fa-file-pdf text-xs w-4 text-center text-zinc-500"></i>
+                            <span>Reports</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- CONFIGURATION SECTION -->
+                <div>
+                    <p class="px-3 mb-2 text-[11px] font-semibold tracking-[0.08em] text-zinc-400 uppercase">Configuration</p>
+                    <nav class="space-y-0.5">
+                        <button onclick="switchSection('controls')" id="nav-controls" class="nav-item">
+                            <i class="fa-solid fa-book-bookmark text-xs w-4 text-center text-zinc-500"></i>
+                            <span>Control library</span>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Engine Footer Status -->
+            <div class="px-3 py-3 border-t border-zinc-100">
+                <div class="flex items-center space-x-2 text-xs text-zinc-500">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="font-medium text-zinc-700">Compy V2 Engine</span>
+                </div>
+                <p class="text-[11px] text-zinc-400 mt-0.5 font-mono">IEA Sec 65B · Hexagonal</p>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Content -->
+        <main class="flex-1 bg-white px-6 lg:px-10 py-8 overflow-y-auto">
+            <div class="max-w-5xl mx-auto">
+
+                <!-- Page Heading -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                     <div>
-                        <span class="font-bold">SYNTHETIC DEMONSTRATION NOTICE:</span>
-                        This mode uses deterministic synthetic evidence fixtures to demonstrate the Compy detection pipeline, process tree anomalies, and DFIR forensic report generation. No physical memory dump is parsed.
+                        <h1 id="page-heading" class="text-[22px] font-bold tracking-tight text-zinc-900">Forensic posture</h1>
+                        <p id="posture-subtitle" class="text-sm text-zinc-500 mt-0.5">Nothing has been measured yet. Posture appears here after the first completed scan.</p>
+                    </div>
+                    <div class="flex items-center space-x-2.5 shrink-0">
+                        <button onclick="openScanPanel('real')" class="px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors flex items-center space-x-2 shadow-2xs">
+                            <i class="fa-solid fa-plus text-[10px]"></i>
+                            <span>New forensic scan</span>
+                        </button>
                     </div>
                 </div>
-                
-                <div class="space-y-3 mb-6">
-                    <label class="block text-sm font-medium text-gray-300">Synthetic Scenario:</label>
-                    <div class="p-3 bg-brand-900 rounded-lg border border-gray-700 flex items-center justify-between">
-                        <div>
-                            <p class="font-semibold text-sm text-white">Cobalt Strike Beacon Simulation</p>
-                            <p class="text-xs text-gray-400 font-mono">PID 4820 (powershell.exe) - PPID Spoofing & DKOM Unlinked PID</p>
+
+                <!-- Top 3 KPI Metric Cards (Probity / Shadcn Style) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- KPI 1: Targets / Active Investigation -->
+                    <div class="shadcn-card p-5">
+                        <p class="text-[11px] font-semibold tracking-[0.06em] text-zinc-500 uppercase mb-2">Targets Analyzed</p>
+                        <p id="kpi-targets-count" class="text-3xl font-bold text-zinc-900 tracking-tight mb-1.5">0</p>
+                        <p id="kpi-targets-sub" class="text-xs text-zinc-500 truncate">0 active investigations</p>
+                    </div>
+
+                    <!-- KPI 2: Controls Loaded -->
+                    <div class="shadcn-card p-5">
+                        <p class="text-[11px] font-semibold tracking-[0.06em] text-zinc-500 uppercase mb-2">Controls Loaded</p>
+                        <p class="text-3xl font-bold text-zinc-900 tracking-tight mb-1.5">10</p>
+                        <p class="text-xs text-zinc-500">4 detectors &amp; 6 YARA rules in git</p>
+                    </div>
+
+                    <!-- KPI 3: Completed Runs -->
+                    <div class="shadcn-card p-5">
+                        <p class="text-[11px] font-semibold tracking-[0.06em] text-zinc-500 uppercase mb-2">Completed Runs</p>
+                        <p id="kpi-runs-count" class="text-3xl font-bold text-zinc-900 tracking-tight mb-1.5">0</p>
+                        <p id="kpi-runs-sub" class="text-xs text-zinc-500 truncate">No evidence collected yet</p>
+                    </div>
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- SECTION: MAIN DASHBOARD / SCANNER / RESULTS WORKSPACE          -->
+                <!-- ============================================================== -->
+                <div id="section-workspace">
+
+                    <!-- Empty State Prompt (Matches Image 1 when collapsed) -->
+                    <div id="empty-posture-card" class="hidden surface-grid border border-zinc-200 rounded-xl p-12 text-center mb-6">
+                        <div class="w-11 h-11 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-500 flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-bullseye text-base"></i>
                         </div>
-                        <span class="px-2 py-1 rounded text-xs bg-red-900/60 text-red-300 font-mono border border-red-700">SYNTHETIC FIXTURE</span>
+                        <h3 class="text-sm font-semibold text-zinc-900 mb-1">No completed scans yet</h3>
+                        <p class="text-xs text-zinc-500 max-w-md mx-auto leading-relaxed mb-5">
+                            Specify a local memory image or executable artifact first, then run a forensic scan against it. Until evidence is collected there is nothing to report on.
+                        </p>
+                        <div class="flex items-center justify-center space-x-3">
+                            <button onclick="expandScannerFromEmpty()" class="px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors shadow-2xs">
+                                Add a target
+                            </button>
+                            <button onclick="expandDemoFromEmpty()" class="px-4 py-2 rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 text-xs font-medium transition-colors">
+                                Run synthetic demo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Active Scan & Results Card -->
+                    <div id="scanner-card-container" class="shadcn-card overflow-hidden">
+
+                        <!-- Mode Selector Bar (Shadcn Segmented Control) -->
+                        <div id="mode-tabs" class="bg-zinc-50/80 border-b border-zinc-200 px-6 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="inline-flex p-1 bg-zinc-200/70 rounded-lg self-start">
+                                <button id="tab-real-btn" onclick="switchMode('real')" class="tab-btn flex items-center space-x-2">
+                                    <i class="fa-solid fa-microchip text-xs"></i>
+                                    <span>Real Forensic Analysis</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-zinc-900 text-white font-mono">REAL</span>
+                                </button>
+                                <button id="tab-demo-btn" onclick="switchMode('demo')" class="tab-btn active flex items-center space-x-2">
+                                    <i class="fa-solid fa-flask text-xs"></i>
+                                    <span>Synthetic Demo Mode</span>
+                                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300 font-mono">DEMO</span>
+                                </button>
+                            </div>
+                            <span class="text-xs text-zinc-500 font-mono hidden md:inline">SHA-256 Ledger Integrity</span>
+                        </div>
+
+                        <!-- STEP 1: INPUT PANE -->
+                        <div id="step-upload" class="p-6 lg:p-8">
+
+                            <!-- DEMO MODE PANEL -->
+                            <div id="panel-demo" class="w-full">
+                                <div class="p-4 bg-amber-50/70 border border-amber-200 rounded-lg mb-6 text-xs text-amber-900 flex items-start space-x-3">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                                    <div class="leading-relaxed">
+                                        <span class="font-semibold">SYNTHETIC DEMONSTRATION NOTICE:</span>
+                                        This mode uses deterministic synthetic evidence fixtures to demonstrate the Compy detection pipeline, process tree anomalies, and DFIR forensic report generation. No physical memory dump is parsed.
+                                    </div>
+                                </div>
+
+                                <div class="mb-6">
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Selected Fixture</label>
+                                    <div class="p-4 bg-zinc-50 rounded-lg border border-zinc-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="w-9 h-9 rounded-lg bg-white border border-zinc-200 flex items-center justify-center text-zinc-700 shrink-0 mt-0.5">
+                                                <i class="fa-solid fa-terminal text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-sm text-zinc-900">Cobalt Strike Beacon Simulation</p>
+                                                <p class="text-xs text-zinc-500 font-mono mt-0.5">PID 4820 (powershell.exe) — PPID Spoofing &amp; DKOM Unlinked PID</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-2.5 py-1 rounded-md text-[11px] bg-amber-50 text-amber-800 font-mono font-medium border border-amber-200 self-start sm:self-center shrink-0">
+                                            SYNTHETIC FIXTURE
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-end">
+                                    <button onclick="startDemoAnalysis()" class="w-full sm:w-auto bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-sm py-2.5 px-6 rounded-lg shadow-2xs transition-colors flex items-center justify-center space-x-2">
+                                        <i class="fa-solid fa-play text-xs"></i>
+                                        <span>Run Synthetic Demonstration</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- REAL MODE PANEL -->
+                            <div id="panel-real" class="hidden w-full">
+                                <div class="p-4 bg-zinc-50 border border-zinc-200 rounded-lg mb-6 text-xs text-zinc-700 flex items-start space-x-3">
+                                    <i class="fa-solid fa-circle-info text-zinc-500 mt-0.5"></i>
+                                    <div class="leading-relaxed">
+                                        <span class="font-semibold text-zinc-900">REAL FORENSIC ACQUISITION MODE:</span>
+                                        Analyzes a local memory image, PE binary, or script using the Compy V2 engine. For raw memory dumps, Volatility 3 and OS symbol tables are required; if unavailable, the engine explicitly reports capability boundaries rather than simulating findings.
+                                    </div>
+                                </div>
+
+                                <div class="mb-5">
+                                    <label for="file-path-input" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
+                                        Target Artifact Local Path
+                                    </label>
+                                    <p class="text-zinc-500 mb-3 text-xs">
+                                        Supported formats: Memory (<code class="font-mono text-zinc-700 bg-zinc-100 px-1 py-0.5 rounded">.raw, .mem, .dmp, .vmem, .bin, .lime</code>), PE (<code class="font-mono text-zinc-700 bg-zinc-100 px-1 py-0.5 rounded">.exe, .dll, .sys</code>), Scripts (<code class="font-mono text-zinc-700 bg-zinc-100 px-1 py-0.5 rounded">.ps1, .bat, .cmd, .vbs, .js</code>)
+                                    </p>
+                                    <div class="flex flex-col sm:flex-row gap-3">
+                                        <input type="text" id="file-path-input" placeholder="C:\dumps\evidence.raw" class="flex-1 px-3.5 py-2.5 rounded-lg bg-white border border-zinc-300 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 font-mono text-sm transition-all">
+                                        <button onclick="startRealAnalysis()" class="bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-sm py-2.5 px-6 rounded-lg shadow-2xs transition-colors flex items-center justify-center space-x-2 shrink-0">
+                                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                                            <span>Execute Forensic Scan</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="pt-3 border-t border-zinc-100 text-xs text-zinc-500 flex items-center space-x-2">
+                                    <i class="fa-solid fa-lock text-zinc-400"></i>
+                                    <span>Direct local disk stream enabled. Cryptographic SHA-256 hash is computed before analysis.</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- STEP 2: PROCESSING -->
+                        <div id="step-processing" class="hidden flex-col items-center justify-center py-14 px-6 bg-zinc-50/40">
+                            <div class="relative w-14 h-14 mb-5 flex items-center justify-center">
+                                <svg class="spinner w-full h-full text-zinc-900" viewBox="0 0 50 50">
+                                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="3.5" stroke="#e4e4e7"></circle>
+                                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="3.5" stroke="currentColor" stroke-dasharray="60, 150" stroke-linecap="round"></circle>
+                                </svg>
+                            </div>
+                            <h2 class="text-base font-semibold text-zinc-900 mb-1">Running forensic analysis</h2>
+                            <p id="processing-status" class="text-xs text-zinc-500 font-mono">Initializing Job Queue...</p>
+
+                            <div class="w-full max-w-sm bg-zinc-200 rounded-full h-1.5 mt-6 overflow-hidden">
+                                <div id="progress-bar" class="bg-zinc-900 h-1.5 rounded-full transition-all duration-500" style="width: 15%"></div>
+                            </div>
+                        </div>
+
+                        <!-- STEP 3: RESULT -->
+                        <div id="step-result" class="hidden flex-col p-6 lg:p-8">
+
+                            <!-- Result Mode Provenance Banner -->
+                            <div id="result-mode-banner" class="w-full mb-6 px-4 py-2.5 rounded-lg border text-xs font-semibold flex items-center justify-between">
+                                <!-- Injected by JS -->
+                            </div>
+
+                            <!-- Verdict Header Row -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-zinc-200">
+                                <div class="flex items-start sm:items-center space-x-4">
+                                    <div id="result-icon-container" class="w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0">
+                                        <!-- Icon injected by JS -->
+                                    </div>
+                                    <div>
+                                        <h2 id="result-title" class="text-lg font-bold text-zinc-900 tracking-tight">Analysis Complete</h2>
+                                        <p id="result-text" class="text-sm text-zinc-600 mt-0.5">System Status: Unknown</p>
+                                    </div>
+                                </div>
+                                <button onclick="resetApp()" class="self-start sm:self-center px-3.5 py-2 rounded-lg bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200 text-xs font-medium transition-colors flex items-center space-x-1.5 shadow-2xs shrink-0">
+                                    <i class="fa-solid fa-rotate-left text-[11px]"></i>
+                                    <span>New Analysis</span>
+                                </button>
+                            </div>
+
+                            <!-- Capability / Unavailable Notice if applicable -->
+                            <div id="result-capability-notice" class="hidden w-full mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900">
+                                <div class="flex items-start space-x-2.5">
+                                    <i class="fa-solid fa-circle-exclamation text-amber-600 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-semibold mb-1">Capability Boundary Notice</p>
+                                        <p id="result-capability-message" class="font-mono text-xs text-amber-800 leading-relaxed break-words">-</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Primary Metadata Summary Grid (3 Columns) -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-6">
+                                <div class="p-4 rounded-xl bg-zinc-50/70 border border-zinc-200">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Investigation ID</p>
+                                    <p id="res-inv-id" class="font-mono text-sm font-semibold text-zinc-900 break-all">-</p>
+                                </div>
+                                <div class="p-4 rounded-xl bg-zinc-50/70 border border-zinc-200">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Forensic Risk Score</p>
+                                    <p id="res-risk-score" class="font-bold text-lg text-zinc-900">-</p>
+                                </div>
+                                <div class="p-4 rounded-xl bg-zinc-50/70 border border-zinc-200">
+                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Execution Architecture</p>
+                                    <p id="res-exec-mode" class="font-semibold text-sm text-zinc-900 mt-0.5"><i class="fa-solid fa-microchip mr-1 text-zinc-500"></i> Compy V2 Native Core</p>
+                                </div>
+                            </div>
+
+                            <!-- Forensic Indicator Cards (Stacked layout so badges never overflow) -->
+                            <div class="mb-6">
+                                <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Forensic Control Indicators</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                                    <!-- PPID Card -->
+                                    <div class="p-4 rounded-xl bg-white border border-zinc-200 flex flex-col justify-between gap-3">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <span class="text-xs font-medium text-zinc-500 leading-tight">Process Lineage (PPID)</span>
+                                            <span id="res-ppid-badge" class="px-2 py-0.5 rounded-md text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium shrink-0 whitespace-nowrap">0 Anomalies</span>
+                                        </div>
+                                        <p id="res-ppid-status" class="font-semibold text-sm text-zinc-900 leading-snug break-words">Baseline Verified</p>
+                                    </div>
+
+                                    <!-- Rootkit DKOM Card -->
+                                    <div class="p-4 rounded-xl bg-white border border-zinc-200 flex flex-col justify-between gap-3">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <span class="text-xs font-medium text-zinc-500 leading-tight">Rootkit DKOM (psscan)</span>
+                                            <span id="res-rootkit-badge" class="px-2 py-0.5 rounded-md text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium shrink-0 whitespace-nowrap">0 Hidden</span>
+                                        </div>
+                                        <p id="res-rootkit-status" class="font-semibold text-sm text-zinc-900 leading-snug break-words">Zero Unlinked PIDs</p>
+                                    </div>
+
+                                    <!-- YARA Signatures Card -->
+                                    <div class="p-4 rounded-xl bg-white border border-zinc-200 flex flex-col justify-between gap-3">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <span class="text-xs font-medium text-zinc-500 leading-tight">YARA Signatures</span>
+                                            <span id="res-yara-badge" class="px-2 py-0.5 rounded-md text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium shrink-0 whitespace-nowrap">0 Matches</span>
+                                        </div>
+                                        <p id="res-yara-status" class="font-semibold text-sm text-zinc-900 leading-snug break-words">Zero Matches</p>
+                                    </div>
+
+                                    <!-- Mitigation Guidance Card -->
+                                    <div class="p-4 rounded-xl bg-white border border-zinc-200 flex flex-col justify-between gap-3">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <span class="text-xs font-medium text-zinc-500 leading-tight">Mitigation Guidance</span>
+                                            <span id="res-mitigation-badge" class="px-2 py-0.5 rounded-md text-[11px] bg-blue-50 text-blue-700 border border-blue-200 font-mono font-medium shrink-0 whitespace-nowrap">Guidance Ready</span>
+                                        </div>
+                                        <p id="res-mitigation-status" class="font-semibold text-sm text-zinc-900 leading-snug break-words">Baseline Guidance</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Export & Dossier Actions -->
+                            <div id="result-actions" class="pt-5 border-t border-zinc-200">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">Evidence Dossier &amp; Section 65B Exports</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
+                                    <a id="download-pdf-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('PDF report artifact is not yet ready.');}" class="bg-zinc-900 hover:bg-zinc-800 text-white font-medium py-2.5 px-4 rounded-lg shadow-2xs flex items-center justify-center space-x-2 transition-colors text-xs">
+                                        <i class="fa-regular fa-file-pdf"></i>
+                                        <span>Download PDF Report</span>
+                                    </a>
+                                    <a id="view-html-btn" href="#" target="_blank" rel="noopener noreferrer" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('HTML report artifact is not yet ready.');}" class="bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-200 font-medium py-2.5 px-4 rounded-lg shadow-2xs flex items-center justify-center space-x-2 transition-colors text-xs">
+                                        <i class="fa-solid fa-arrow-up-right-from-square text-zinc-500"></i>
+                                        <span>View Interactive HTML</span>
+                                    </a>
+                                    <a id="download-html-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('HTML report artifact is not yet ready.');}" class="bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-200 font-medium py-2.5 px-4 rounded-lg shadow-2xs flex items-center justify-center space-x-2 transition-colors text-xs">
+                                        <i class="fa-solid fa-file-code text-zinc-500"></i>
+                                        <span>Download HTML</span>
+                                    </a>
+                                    <a id="download-json-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('JSON evidence artifact is not yet ready.');}" class="bg-white hover:bg-zinc-50 text-zinc-900 border border-zinc-200 font-medium py-2.5 px-4 rounded-lg shadow-2xs flex items-center justify-center space-x-2 transition-colors text-xs">
+                                        <i class="fa-solid fa-code text-zinc-500"></i>
+                                        <span>Download JSON (SIEM)</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+
                     </div>
                 </div>
 
-                <button onclick="startDemoAnalysis()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-[1.01] flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-play"></i>
-                    <span>Run Synthetic Demonstration</span>
-                </button>
-            </div>
+                <!-- ============================================================== -->
+                <!-- SECTION: CONTROL LIBRARY (REAL REPOSITORY DETECTORS & RULES)   -->
+                <!-- ============================================================== -->
+                <div id="section-controls" class="hidden space-y-6">
+                    <div class="shadcn-card overflow-hidden">
+                        <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50/60 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-zinc-900">Forensic Detection Providers</h3>
+                                <p class="text-xs text-zinc-500">Registered hexagonal domain detectors in <code class="font-mono">fmd.v2.adapters.providers</code></p>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono bg-zinc-100 text-zinc-700 border border-zinc-200">4 Active</span>
+                        </div>
+                        <div class="divide-y divide-zinc-200 text-sm">
+                            <div class="px-6 py-3.5 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-medium text-zinc-900">ProcessTreeAnomalyDetector</p>
+                                    <p class="text-xs text-zinc-500">Validates Windows parent-child lineage (smss, wininit, services, svchost) and shell exploit spawns</p>
+                                </div>
+                                <span class="font-mono text-xs text-zinc-500 shrink-0">process_tree_anomaly_v1</span>
+                            </div>
+                            <div class="px-6 py-3.5 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-medium text-zinc-900">HiddenProcessDetector</p>
+                                    <p class="text-xs text-zinc-500">Cross-references active process doubly-linked list (pslist) against physical pool carving (psscan) for DKOM</p>
+                                </div>
+                                <span class="font-mono text-xs text-zinc-500 shrink-0">hidden_process_rootkit_v1</span>
+                            </div>
+                            <div class="px-6 py-3.5 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-medium text-zinc-900">InjectedCodeDetector</p>
+                                    <p class="text-xs text-zinc-500">Audits Virtual Address Descriptors (VADs) for unbacked PAGE_EXECUTE_READWRITE memory regions</p>
+                                </div>
+                                <span class="font-mono text-xs text-zinc-500 shrink-0">injected_code_malfind_v1</span>
+                            </div>
+                            <div class="px-6 py-3.5 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-medium text-zinc-900">YaraDetector</p>
+                                    <p class="text-xs text-zinc-500">Executes pattern matching against process memory regions, command lines, and static binaries</p>
+                                </div>
+                                <span class="font-mono text-xs text-zinc-500 shrink-0">yara_signature_detector_v1</span>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- REAL MODE PANEL -->
-            <div id="panel-real" class="hidden w-full bg-brand-800 rounded-xl p-6 border border-blue-900/50 shadow-inner">
-                <div class="p-3 bg-blue-950/40 border border-blue-700/60 rounded-lg mb-4 text-xs text-blue-300 flex items-start space-x-2">
-                    <i class="fa-solid fa-circle-info text-base mt-0.5 text-blue-400"></i>
-                    <div>
-                        <span class="font-bold">REAL FORENSIC ACQUISITION MODE:</span>
-                        Analyzes a raw memory dump using the real Compy engine. Requires Volatility 3 and operating system symbol tables. If symbols or Volatility 3 are unavailable, the engine will honestly report capabilities as unavailable rather than simulating findings.
+                    <div class="shadcn-card overflow-hidden">
+                        <div class="px-6 py-4 border-b border-zinc-200 bg-zinc-50/60 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-zinc-900">YARA Rule Signatures</h3>
+                                <p class="text-xs text-zinc-500">Loaded from <code class="font-mono">rules/yara/*.yar</code> in repository</p>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono bg-zinc-100 text-zinc-700 border border-zinc-200">6 Rules</span>
+                        </div>
+                        <div class="divide-y divide-zinc-200 text-sm">
+                            <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-mono text-xs font-semibold text-zinc-900">PowerShell_Memory_Download_Cradle</p>
+                                    <p class="text-xs text-zinc-500">rules/yara/download_cradles.yar — In-memory web download cradles (T1059.001)</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200">HIGH</span>
+                            </div>
+                            <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-mono text-xs font-semibold text-zinc-900">Suspicious_Memory_Encoded_Command</p>
+                                    <p class="text-xs text-zinc-500">rules/yara/download_cradles.yar — Base64 encoded PowerShell indicators (T1027)</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-zinc-100 text-zinc-700 border border-zinc-200">MEDIUM</span>
+                            </div>
+                            <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-mono text-xs font-semibold text-zinc-900">Windows_PE_Header_In_Memory</p>
+                                    <p class="text-xs text-zinc-500">rules/yara/memory_injection.yar — Unbacked MZ/PE executable header in memory allocation (T1055)</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200">HIGH</span>
+                            </div>
+                            <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-mono text-xs font-semibold text-zinc-900">Shellcode_Common_Prologues</p>
+                                    <p class="text-xs text-zinc-500">rules/yara/memory_injection.yar — Egg-hunter cld/call prologues &amp; PEB API hash lookup stubs (T1055.002)</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-amber-50 text-amber-700 border border-amber-200">HIGH</span>
+                            </div>
+                            <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-mono text-xs font-semibold text-zinc-900">WannaCry_Execution_Artifacts</p>
+                                    <p class="text-xs text-zinc-500">rules/yara/ransomware.yar — WannaCry ransomware decrypters and Tor staging indicators (T1486)</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-red-50 text-red-700 border border-red-200">CRITICAL</span>
+                            </div>
+                            <div class="px-6 py-3 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-mono text-xs font-semibold text-zinc-900">Ransomware_Decryption_Notice_Strings</p>
+                                    <p class="text-xs text-zinc-500">rules/yara/ransomware.yar — Extortion note strings in process memory (T1486)</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono bg-red-50 text-red-700 border border-red-200">CRITICAL</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <h3 class="text-lg font-semibold mb-2">Target Memory Image Path</h3>
-                <p class="text-gray-400 mb-4 text-xs">Supported raw memory formats: .raw, .mem, .dmp, .vmem, .bin, .lime</p>
-                
-                <input type="text" id="file-path-input" placeholder="C:\dumps\evidence.raw" class="w-full px-4 py-3 rounded bg-brand-900 border border-gray-500 text-white focus:outline-none focus:border-blue-500 mb-4 font-mono text-sm">
-                
-                <button onclick="startRealAnalysis()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-[1.01] flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <span>Execute Real Forensic Scan</span>
-                </button>
-
-                <div class="mt-4 text-xs text-gray-500 flex items-center space-x-2">
-                    <i class="fa-solid fa-bolt"></i>
-                    <span>Direct disk read enabled. SHA-256 evidence integrity calculated prior to analysis.</span>
-                </div>
             </div>
-
-        </div>
-
-        <!-- Step 2: Processing -->
-        <div id="step-processing" class="hidden flex-col items-center justify-center py-10">
-            <div class="relative w-32 h-32 mb-8">
-                <svg class="spinner w-full h-full text-blue-500" viewBox="0 0 50 50">
-                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke="currentColor" stroke-dasharray="90, 150" stroke-linecap="round"></circle>
-                </svg>
-                <i class="fa-solid fa-microchip absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl text-white"></i>
-            </div>
-            <h2 class="text-2xl font-bold mb-2">Analyzing Memory...</h2>
-            <p id="processing-status" class="text-blue-400 animate-pulse">Initializing Job Queue...</p>
-            
-            <div class="w-full max-w-md bg-gray-700 rounded-full h-2 mt-6 overflow-hidden">
-                <div id="progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 10%"></div>
-            </div>
-        </div>
-
-        <!-- Step 3: Result -->
-        <div id="step-result" class="hidden flex-col items-center justify-center py-6">
-            
-            <!-- Result Banner (Mode specific) -->
-            <div id="result-mode-banner" class="w-full mb-6 p-3 rounded-lg border text-xs font-semibold text-center flex items-center justify-center space-x-2">
-                <!-- Injected by JS -->
-            </div>
-
-            <div id="result-icon-container" class="w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl">
-                <!-- Icon injected by JS -->
-            </div>
-            <h2 id="result-title" class="text-3xl font-bold mb-2">Analysis Complete</h2>
-            <p id="result-text" class="text-xl mb-6 text-center">System Status: Unknown</p>
-            
-            <!-- Capability / Unavailable Notice if applicable -->
-            <div id="result-capability-notice" class="hidden w-full mb-6 p-4 bg-yellow-950/40 border border-yellow-700 rounded-lg text-sm text-yellow-300">
-                <p id="result-capability-message" class="font-mono text-xs">-</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-4">
-                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
-                    <p class="text-gray-400 text-sm mb-1">Investigation ID</p>
-                    <p id="res-inv-id" class="font-mono text-sm text-white break-all">-</p>
-                </div>
-                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
-                    <p class="text-gray-400 text-sm mb-1">Forensic Risk Score</p>
-                    <p id="res-risk-score" class="font-bold text-lg text-gray-300">-</p>
-                </div>
-                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700">
-                    <p class="text-gray-400 text-sm mb-1">Execution Architecture</p>
-                    <p id="res-exec-mode" class="font-semibold text-blue-400"><i class="fa-solid fa-code-branch mr-1"></i> Compy V2 Native Core</p>
-                </div>
-            </div>
-
-            <!-- Forensic Indicator Badges -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-8">
-                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-400 text-xs mb-1">Process Lineage (PPID)</p>
-                        <p id="res-ppid-status" class="font-semibold text-sm text-green-400">Baseline Verified</p>
-                    </div>
-                    <span id="res-ppid-badge" class="px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono">0 Anomalies</span>
-                </div>
-                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-400 text-xs mb-1">Rootkit DKOM (psscan)</p>
-                        <p id="res-rootkit-status" class="font-semibold text-sm text-green-400">Zero Unlinked PIDs</p>
-                    </div>
-                    <span id="res-rootkit-badge" class="px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono">0 Hidden</span>
-                </div>
-                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-400 text-xs mb-1">YARA Signatures</p>
-                        <p id="res-yara-status" class="font-semibold text-sm text-green-400">Zero Matches</p>
-                    </div>
-                    <span id="res-yara-badge" class="px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono">0 Matches</span>
-                </div>
-                <div class="bg-brand-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-400 text-xs mb-1">Mitigation Guidance</p>
-                        <p id="res-mitigation-status" class="font-semibold text-sm text-blue-400">Baseline Guidance</p>
-                    </div>
-                    <span id="res-mitigation-badge" class="px-2 py-1 rounded text-xs bg-blue-900 text-blue-300 font-mono">Guidance Ready</span>
-                </div>
-            </div>
-
-            <div id="result-actions" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
-                <a id="download-pdf-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('PDF report artifact is not yet ready.');}" class="text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
-                    <i class="fa-solid fa-file-pdf"></i>
-                    <span>Download PDF</span>
-                </a>
-                <a id="view-html-btn" href="#" target="_blank" rel="noopener noreferrer" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('HTML report artifact is not yet ready.');}" class="text-center bg-cyan-700 hover:bg-cyan-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    <span>View HTML</span>
-                </a>
-                <a id="download-html-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('HTML report artifact is not yet ready.');}" class="text-center bg-blue-700 hover:bg-blue-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
-                    <i class="fa-solid fa-file-code"></i>
-                    <span>Download HTML</span>
-                </a>
-                <a id="download-json-btn" href="#" onclick="if(!this.href || this.getAttribute('href')==='#'){event.preventDefault();alert('JSON evidence artifact is not yet ready.');}" class="text-center bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-3 rounded-lg shadow-lg flex items-center justify-center space-x-2 transition-transform transform hover:scale-105 text-sm">
-                    <i class="fa-solid fa-code"></i>
-                    <span>Download JSON</span>
-                </a>
-            </div>
-            <button onclick="resetApp()" class="mt-6 text-gray-400 hover:text-white underline">Start Another Analysis</button>
-        </div>
-
-    </div>
-
-    <!-- Footer -->
-    <div class="mt-12 text-center text-gray-600 text-sm">
-        <p>Compsognathus V2 &copy; 2026. Digital Forensics &amp; Incident Response Platform.</p>
+        </main>
     </div>
 
     <script>
@@ -239,9 +603,137 @@
         const processingStatus = document.getElementById('processing-status');
         const progressBar = document.getElementById('progress-bar');
         const modeTabs = document.getElementById('mode-tabs');
-        
+        const emptyPostureCard = document.getElementById('empty-posture-card');
+        const scannerCardContainer = document.getElementById('scanner-card-container');
+
         let currentMode = 'demo';
         let pollInterval;
+        let completedRunsCount = 0;
+        let targetsAnalyzedCount = 0;
+        let hasCompletedScan = false;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/posture');
+                if (res.ok) {
+                    const p = await res.json();
+                    targetsAnalyzedCount = p.targets_analyzed || 0;
+                    completedRunsCount = p.completed_runs || 0;
+                    if (targetsAnalyzedCount > 0) {
+                        document.getElementById('kpi-targets-count').innerText = String(targetsAnalyzedCount);
+                        document.getElementById('kpi-targets-sub').innerText = p.latest_investigation_id
+                            ? `Latest: ${p.latest_investigation_id}`
+                            : `${targetsAnalyzedCount} analyzed in session`;
+                    }
+                    if (completedRunsCount > 0) {
+                        hasCompletedScan = true;
+                        document.getElementById('kpi-runs-count').innerText = String(completedRunsCount);
+                        document.getElementById('kpi-runs-sub').innerText = p.latest_verdict
+                            ? `Last verdict: ${p.latest_verdict}`
+                            : `${completedRunsCount} completed`;
+                        const badge = document.getElementById('sidebar-findings-badge');
+                        if (badge && p.latest_findings_count !== undefined) {
+                            badge.innerText = String(p.latest_findings_count);
+                        }
+                    }
+                }
+            } catch (err) {
+                // Ignore initial posture fetch error
+            }
+        });
+
+        // Keyboard shortcut Cmd+K / Ctrl+K to jump to real path input
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                focusScanInput();
+            }
+        });
+
+        function focusScanInput() {
+            switchSection('scans');
+            switchMode('real');
+            resetApp();
+            const input = document.getElementById('file-path-input');
+            if (input) input.focus();
+        }
+
+        function openScanPanel(mode) {
+            switchSection('scans');
+            switchMode(mode || 'real');
+            resetApp();
+            if (mode === 'real') {
+                const input = document.getElementById('file-path-input');
+                if (input) input.focus();
+            }
+        }
+
+        function expandScannerFromEmpty() {
+            emptyPostureCard.classList.add('hidden');
+            scannerCardContainer.classList.remove('hidden');
+            switchMode('real');
+            const input = document.getElementById('file-path-input');
+            if (input) input.focus();
+        }
+
+        function expandDemoFromEmpty() {
+            emptyPostureCard.classList.add('hidden');
+            scannerCardContainer.classList.remove('hidden');
+            switchMode('demo');
+        }
+
+        function switchSection(section) {
+            const navIds = ['dashboard', 'findings', 'scans', 'reports', 'controls'];
+            navIds.forEach(id => {
+                const el = document.getElementById(`nav-${id}`);
+                if (el) {
+                    if (id === section) el.classList.add('active');
+                    else el.classList.remove('active');
+                }
+            });
+
+            const workspaceEl = document.getElementById('section-workspace');
+            const controlsEl = document.getElementById('section-controls');
+            const headingEl = document.getElementById('page-heading');
+
+            if (section === 'controls') {
+                workspaceEl.classList.add('hidden');
+                controlsEl.classList.remove('hidden');
+                headingEl.innerText = 'Control library';
+                return;
+            }
+
+            controlsEl.classList.add('hidden');
+            workspaceEl.classList.remove('hidden');
+
+            if (section === 'dashboard') {
+                headingEl.innerText = 'Forensic posture';
+                scannerCardContainer.classList.remove('hidden');
+                emptyPostureCard.classList.add('hidden');
+            } else if (section === 'findings') {
+                headingEl.innerText = 'Findings & indicators';
+                if (!hasCompletedScan) {
+                    emptyPostureCard.classList.remove('hidden');
+                    scannerCardContainer.classList.add('hidden');
+                } else {
+                    emptyPostureCard.classList.add('hidden');
+                    scannerCardContainer.classList.remove('hidden');
+                }
+            } else if (section === 'scans') {
+                headingEl.innerText = 'Forensic scans';
+                emptyPostureCard.classList.add('hidden');
+                scannerCardContainer.classList.remove('hidden');
+            } else if (section === 'reports') {
+                headingEl.innerText = 'Forensic reports';
+                if (!hasCompletedScan) {
+                    emptyPostureCard.classList.remove('hidden');
+                    scannerCardContainer.classList.add('hidden');
+                } else {
+                    emptyPostureCard.classList.add('hidden');
+                    scannerCardContainer.classList.remove('hidden');
+                }
+            }
+        }
 
         function switchMode(mode) {
             currentMode = mode;
@@ -251,13 +743,13 @@
             const panelReal = document.getElementById('panel-real');
 
             if (mode === 'demo') {
-                tabDemo.className = 'tab-btn active py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
-                tabReal.className = 'tab-btn text-gray-400 hover:text-gray-200 py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
+                tabDemo.className = 'tab-btn active flex items-center space-x-2';
+                tabReal.className = 'tab-btn flex items-center space-x-2';
                 panelDemo.classList.remove('hidden');
                 panelReal.classList.add('hidden');
             } else {
-                tabReal.className = 'tab-btn active py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
-                tabDemo.className = 'tab-btn text-gray-400 hover:text-gray-200 py-3 px-6 text-sm flex items-center space-x-2 transition-colors';
+                tabReal.className = 'tab-btn active flex items-center space-x-2';
+                tabDemo.className = 'tab-btn flex items-center space-x-2';
                 panelReal.classList.remove('hidden');
                 panelDemo.classList.add('hidden');
             }
@@ -270,6 +762,8 @@
             stepProcessing.classList.remove('flex');
             stepUpload.classList.remove('hidden');
             modeTabs.classList.remove('hidden');
+            emptyPostureCard.classList.add('hidden');
+            scannerCardContainer.classList.remove('hidden');
             progressBar.style.width = '0%';
             document.getElementById('file-path-input').value = '';
             document.getElementById('result-capability-notice').classList.add('hidden');
@@ -282,7 +776,7 @@
             modeTabs.classList.add('hidden');
             stepProcessing.classList.remove('hidden');
             stepProcessing.classList.add('flex');
-            
+
             progressBar.style.width = '25%';
             processingStatus.innerText = "Executing Synthetic Analysis Pipeline...";
 
@@ -292,7 +786,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ sample_name: "CobaltStrike_Beacon_Sample" })
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     pollJobStatus(data.job_id);
@@ -317,7 +811,7 @@
             modeTabs.classList.add('hidden');
             stepProcessing.classList.remove('hidden');
             stepProcessing.classList.add('flex');
-            
+
             progressBar.style.width = '20%';
             processingStatus.innerText = "Submitting Real Memory Analysis Job...";
 
@@ -327,7 +821,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ file_path: filePath })
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     pollJobStatus(data.job_id);
@@ -344,27 +838,27 @@
 
         function pollJobStatus(jobId) {
             let fakeProgress = 20;
-            
+
             pollInterval = setInterval(async () => {
                 try {
                     const res = await fetch(`/api/status/${jobId}`);
                     const data = await res.json();
-                    
+
                     processingStatus.innerText = data.message || "Processing memory image...";
-                    
+
                     if (data.status === 'processing' || data.status === 'queued') {
                         if(fakeProgress < 90) fakeProgress += 4;
                         progressBar.style.width = `${fakeProgress}%`;
-                    } 
+                    }
                     else if (data.status === 'completed') {
                         clearInterval(pollInterval);
                         progressBar.style.width = '100%';
-                        setTimeout(() => showResult(data), 400);
+                        setTimeout(() => showResult(data), 300);
                     }
                     else if (data.status === 'unavailable') {
                         clearInterval(pollInterval);
                         progressBar.style.width = '100%';
-                        setTimeout(() => showUnavailableResult(data), 400);
+                        setTimeout(() => showUnavailableResult(data), 300);
                     }
                     else if (data.status === 'failed' || data.status === 'unsupported') {
                         clearInterval(pollInterval);
@@ -377,28 +871,72 @@
             }, 1000);
         }
 
+        function updatePostureKPIs(data, isUnavailable) {
+            hasCompletedScan = true;
+            targetsAnalyzedCount += 1;
+            if (!isUnavailable) {
+                completedRunsCount += 1;
+            }
+
+            const kpiTargets = document.getElementById('kpi-targets-count');
+            const kpiTargetsSub = document.getElementById('kpi-targets-sub');
+            const kpiRuns = document.getElementById('kpi-runs-count');
+            const kpiRunsSub = document.getElementById('kpi-runs-sub');
+            const subtitle = document.getElementById('posture-subtitle');
+            const findingsBadge = document.getElementById('sidebar-findings-badge');
+
+            if (kpiTargets) kpiTargets.innerText = String(targetsAnalyzedCount);
+            if (kpiTargetsSub) {
+                kpiTargetsSub.innerText = data.investigation_id
+                    ? `Latest: ${data.investigation_id}`
+                    : 'Capability boundary reached';
+            }
+            if (kpiRuns) kpiRuns.innerText = String(completedRunsCount);
+            if (kpiRunsSub) {
+                kpiRunsSub.innerText = isUnavailable
+                    ? 'Provider symbol table required'
+                    : `Last verdict: ${data.verdict || data.finding || 'COMPLETED'}`;
+            }
+
+            const totalFindings = (data.ppid_count || 0) + (data.rootkit_count || 0) + (data.yara_count || 0) + (data.injected_count || 0);
+            if (findingsBadge) {
+                findingsBadge.innerText = String(totalFindings);
+                findingsBadge.className = totalFindings > 0
+                    ? "ml-auto text-[11px] font-mono px-1.5 py-0.2 rounded bg-red-100 text-red-700 font-semibold"
+                    : "ml-auto text-[11px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 text-zinc-600";
+            }
+
+            if (subtitle) {
+                subtitle.innerText = isUnavailable
+                    ? `Scan halted under FAIL_IF_MISSING policy — ${data.investigation_id || 'No dossier generated'}.`
+                    : `Measured from investigation ${data.investigation_id} (${data.is_synthetic_demo ? 'Synthetic Demo' : 'Real Forensic Engine'}).`;
+            }
+        }
+
         function showUnavailableResult(data) {
             stepProcessing.classList.add('hidden');
             stepProcessing.classList.remove('flex');
             stepResult.classList.remove('hidden');
             stepResult.classList.add('flex');
 
+            updatePostureKPIs(data, true);
+
             const banner = document.getElementById('result-mode-banner');
-            banner.className = "w-full mb-6 p-3 rounded-lg border bg-yellow-950/60 border-yellow-600 text-yellow-300 text-xs font-semibold text-center flex items-center justify-center space-x-2";
-            banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span>REAL FORENSIC MODE — CAPABILITY UNAVAILABLE</span>';
+            banner.className = "w-full mb-6 px-4 py-2.5 rounded-lg border bg-amber-50 border-amber-200 text-amber-800 text-xs font-semibold flex items-center justify-between";
+            banner.innerHTML = '<span><i class="fa-solid fa-triangle-exclamation mr-1.5"></i> REAL FORENSIC MODE — CAPABILITY UNAVAILABLE</span><span class="font-mono text-[11px]">FAIL_IF_MISSING</span>';
 
             const resultText = document.getElementById('result-text');
             const iconContainer = document.getElementById('result-icon-container');
-            resultText.innerHTML = `Execution Status: <span class="text-yellow-400 font-bold">CAPABILITY UNAVAILABLE</span>`;
-            iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-400 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+            resultText.innerHTML = `Execution Status: <span class="text-amber-700 font-semibold">CAPABILITY UNAVAILABLE</span>`;
+            iconContainer.className = "w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-amber-50 text-amber-600 border border-amber-200 shrink-0";
             iconContainer.innerHTML = '<i class="fa-solid fa-ban"></i>';
 
             document.getElementById('res-inv-id').innerText = data.investigation_id || "NOT_ASSIGNED";
             if (document.getElementById('res-risk-score')) {
                 document.getElementById('res-risk-score').innerText = "0 / 100";
-                document.getElementById('res-risk-score').className = "font-bold text-lg text-gray-400";
+                document.getElementById('res-risk-score').className = "font-bold text-lg text-zinc-500";
             }
-            document.getElementById('res-exec-mode').innerHTML = '<span class="text-yellow-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Provider Missing (volatility3)</span>';
+            document.getElementById('res-exec-mode').innerHTML = '<span class="text-amber-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Provider Missing (volatility3)</span>';
 
             const notice = document.getElementById('result-capability-notice');
             notice.classList.remove('hidden');
@@ -407,30 +945,30 @@
             const ppidStatus = document.getElementById('res-ppid-status');
             const ppidBadge = document.getElementById('res-ppid-badge');
             ppidStatus.innerText = "UNAVAILABLE (Not Executed)";
-            ppidStatus.className = "font-semibold text-sm text-gray-400";
+            ppidStatus.className = "font-semibold text-sm text-zinc-500 leading-snug break-words";
             ppidBadge.innerText = "NOT_RUN";
-            ppidBadge.className = "px-2 py-1 rounded text-xs bg-gray-800 text-gray-400 font-mono";
+            ppidBadge.className = "px-2 py-0.5 rounded-md text-[11px] bg-zinc-100 text-zinc-600 border border-zinc-200 font-mono font-medium shrink-0 whitespace-nowrap";
 
             const rootkitStatus = document.getElementById('res-rootkit-status');
             const rootkitBadge = document.getElementById('res-rootkit-badge');
             rootkitStatus.innerText = "UNAVAILABLE (Not Executed)";
-            rootkitStatus.className = "font-semibold text-sm text-gray-400";
+            rootkitStatus.className = "font-semibold text-sm text-zinc-500 leading-snug break-words";
             rootkitBadge.innerText = "NOT_RUN";
-            rootkitBadge.className = "px-2 py-1 rounded text-xs bg-gray-800 text-gray-400 font-mono";
+            rootkitBadge.className = "px-2 py-0.5 rounded-md text-[11px] bg-zinc-100 text-zinc-600 border border-zinc-200 font-mono font-medium shrink-0 whitespace-nowrap";
 
             const yaraStatus = document.getElementById('res-yara-status');
             const yaraBadge = document.getElementById('res-yara-badge');
             yaraStatus.innerText = "UNAVAILABLE (Not Executed)";
-            yaraStatus.className = "font-semibold text-sm text-gray-400";
+            yaraStatus.className = "font-semibold text-sm text-zinc-500 leading-snug break-words";
             yaraBadge.innerText = "NOT_RUN";
-            yaraBadge.className = "px-2 py-1 rounded text-xs bg-gray-800 text-gray-400 font-mono";
+            yaraBadge.className = "px-2 py-0.5 rounded-md text-[11px] bg-zinc-100 text-zinc-600 border border-zinc-200 font-mono font-medium shrink-0 whitespace-nowrap";
 
             const mitigationStatus = document.getElementById('res-mitigation-status');
             const mitigationBadge = document.getElementById('res-mitigation-badge');
             mitigationStatus.innerText = "Offline Capability Failure Guidance";
-            mitigationStatus.className = "font-semibold text-sm text-yellow-400";
+            mitigationStatus.className = "font-semibold text-sm text-amber-800 leading-snug break-words";
             mitigationBadge.innerText = "Acquire Symbols";
-            mitigationBadge.className = "px-2 py-1 rounded text-xs bg-yellow-900 text-yellow-300 font-mono";
+            mitigationBadge.className = "px-2 py-0.5 rounded-md text-[11px] bg-amber-50 text-amber-700 border border-amber-200 font-mono font-medium shrink-0 whitespace-nowrap";
 
             document.getElementById('result-actions').classList.add('hidden');
         }
@@ -440,20 +978,22 @@
             stepProcessing.classList.remove('flex');
             stepResult.classList.remove('hidden');
             stepResult.classList.add('flex');
-            
+
+            updatePostureKPIs(data, false);
+
             document.getElementById('res-inv-id').innerText = data.investigation_id;
-            
+
             const banner = document.getElementById('result-mode-banner');
             const isDemo = data.is_synthetic_demo === true || data.mode === 'DEMO';
-            
+
             if (isDemo) {
-                banner.className = "w-full mb-6 p-3 rounded-lg border bg-amber-950/60 border-amber-600 text-amber-300 text-xs font-semibold text-center flex items-center justify-center space-x-2";
-                banner.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> <span>SYNTHETIC DEMONSTRATION — NOT REAL FORENSIC EVIDENCE</span>';
-                document.getElementById('res-exec-mode').innerHTML = '<span class="text-amber-400"><i class="fa-solid fa-flask mr-1"></i> Synthetic Demo Engine</span>';
+                banner.className = "w-full mb-6 px-4 py-2.5 rounded-lg border bg-amber-50 border-amber-200 text-amber-800 text-xs font-semibold flex items-center justify-between";
+                banner.innerHTML = '<span><i class="fa-solid fa-flask mr-1.5"></i> SYNTHETIC DEMONSTRATION — NOT REAL FORENSIC EVIDENCE</span><span class="font-mono text-[11px]">DEMO MODE</span>';
+                document.getElementById('res-exec-mode').innerHTML = '<span class="text-amber-700"><i class="fa-solid fa-flask mr-1"></i> Synthetic Demo Engine</span>';
             } else {
-                banner.className = "w-full mb-6 p-3 rounded-lg border bg-blue-950/60 border-blue-600 text-blue-300 text-xs font-semibold text-center flex items-center justify-center space-x-2";
-                banner.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>AUTHENTIC EVIDENCE CHAIN — REAL FORENSIC ENGINE</span>';
-                document.getElementById('res-exec-mode').innerHTML = '<span class="text-blue-400"><i class="fa-solid fa-microchip mr-1"></i> Compy V2 Native Core</span>';
+                banner.className = "w-full mb-6 px-4 py-2.5 rounded-lg border bg-zinc-50 border-zinc-200 text-zinc-800 text-xs font-semibold flex items-center justify-between";
+                banner.innerHTML = '<span><i class="fa-solid fa-shield-halved mr-1.5 text-blue-600"></i> AUTHENTIC EVIDENCE CHAIN — REAL FORENSIC ENGINE</span><span class="font-mono text-[11px] text-zinc-500">SHA-256 SEALED</span>';
+                document.getElementById('res-exec-mode').innerHTML = '<span class="text-zinc-900"><i class="fa-solid fa-microchip mr-1 text-blue-600"></i> Compy V2 Native Core</span>';
             }
 
             const riskScore = data.risk_score !== undefined ? data.risk_score : null;
@@ -462,15 +1002,15 @@
                 if (riskScore !== null) {
                     riskScoreEl.innerText = `${riskScore} / 100`;
                     if (riskScore >= 75) {
-                        riskScoreEl.className = "font-bold text-lg text-red-400";
+                        riskScoreEl.className = "font-bold text-lg text-red-600";
                     } else if (riskScore >= 30) {
-                        riskScoreEl.className = "font-bold text-lg text-yellow-400";
+                        riskScoreEl.className = "font-bold text-lg text-amber-600";
                     } else {
-                        riskScoreEl.className = "font-bold text-lg text-green-400";
+                        riskScoreEl.className = "font-bold text-lg text-emerald-600";
                     }
                 } else {
                     riskScoreEl.innerText = "N/A";
-                    riskScoreEl.className = "font-bold text-lg text-gray-400";
+                    riskScoreEl.className = "font-bold text-lg text-zinc-400";
                 }
             }
 
@@ -479,41 +1019,47 @@
 
             const verdict = (data.verdict || '').toUpperCase();
             const finding = (data.finding || '').toUpperCase();
-            
+
             if (verdict === 'DETECTED' || finding === 'TRUE') {
-                resultText.innerHTML = `System Status: <span class="text-red-500 font-bold">Malware Detected (TRUE)</span>`;
-                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-red-900 text-red-500 border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+                resultText.innerHTML = `System Status: <span class="text-red-600 font-semibold">Malware Detected (TRUE)</span>`;
+                iconContainer.className = "w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-red-50 text-red-600 border border-red-200 shrink-0";
                 iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
             } else if (verdict === 'NOT DETECTED' || finding === 'FALSE') {
-                resultText.innerHTML = `System Status: <span class="text-green-500 font-bold">No Threats Detected Within Executed Scope (FALSE)</span>`;
-                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-green-900 text-green-500 border-2 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]";
-                iconContainer.innerHTML = '<i class="fa-solid fa-shield-check"></i>';
+                resultText.innerHTML = `System Status: <span class="text-emerald-600 font-semibold">No Threats Detected Within Executed Scope (FALSE)</span>`;
+                iconContainer.className = "w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0";
+                iconContainer.innerHTML = '<i class="fa-solid fa-shield-halved"></i>';
             } else if (verdict === 'PARTIAL' || finding === 'PARTIAL') {
-                resultText.innerHTML = `System Status: <span class="text-yellow-500 font-bold">Partial Analysis (PARTIAL)</span>`;
-                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-500 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+                resultText.innerHTML = `System Status: <span class="text-amber-600 font-semibold">Partial Analysis (PARTIAL)</span>`;
+                iconContainer.className = "w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-amber-50 text-amber-600 border border-amber-200 shrink-0";
                 iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
             } else if (verdict === 'UNAVAILABLE' || finding === 'UNAVAILABLE') {
-                resultText.innerHTML = `System Status: <span class="text-yellow-500 font-bold">Capability Unavailable (UNAVAILABLE)</span>`;
-                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-500 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+                resultText.innerHTML = `System Status: <span class="text-amber-600 font-semibold">Capability Unavailable (UNAVAILABLE)</span>`;
+                iconContainer.className = "w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-amber-50 text-amber-600 border border-amber-200 shrink-0";
                 iconContainer.innerHTML = '<i class="fa-solid fa-ban"></i>';
             } else {
-                resultText.innerHTML = `System Status: <span class="text-yellow-500 font-bold">Inconclusive (UNKNOWN)</span>`;
-                iconContainer.className = "w-20 h-20 rounded-full flex items-center justify-center mb-6 text-4xl bg-yellow-900 text-yellow-500 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)]";
+                resultText.innerHTML = `System Status: <span class="text-amber-600 font-semibold">Inconclusive (UNKNOWN)</span>`;
+                iconContainer.className = "w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-amber-50 text-amber-600 border border-amber-200 shrink-0";
                 iconContainer.innerHTML = '<i class="fa-solid fa-circle-question"></i>';
             }
-            
+
             const ppidCount = data.ppid_count || 0;
             const rootkitCount = data.rootkit_count || 0;
             const yaraCount = data.yara_count || 0;
-            const mitigationCount = data.mitigation_count || 0;
 
             const ppidStatus = document.getElementById('res-ppid-status');
             const ppidBadge = document.getElementById('res-ppid-badge');
             if (data.indicators && data.indicators.ppid_status) {
                 ppidStatus.innerText = data.indicators.ppid_status;
                 ppidBadge.innerText = data.indicators.ppid_badge;
-                ppidStatus.className = ppidCount > 0 ? "font-semibold text-sm text-red-400" : "font-semibold text-sm text-green-400";
-                ppidBadge.className = ppidCount > 0 ? "px-2 py-1 rounded text-xs bg-red-900 text-red-300 font-mono" : "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+                const isUnavail = data.indicators.ppid_badge === 'Unavailable';
+                ppidStatus.className = ppidCount > 0
+                    ? "font-semibold text-sm text-red-600 leading-snug break-words"
+                    : (isUnavail ? "font-semibold text-sm text-zinc-500 leading-snug break-words" : "font-semibold text-sm text-zinc-900 leading-snug break-words");
+                ppidBadge.className = ppidCount > 0
+                    ? "px-2 py-0.5 rounded-md text-[11px] bg-red-50 text-red-700 border border-red-200 font-mono font-medium shrink-0 whitespace-nowrap"
+                    : (isUnavail
+                        ? "px-2 py-0.5 rounded-md text-[11px] bg-zinc-100 text-zinc-600 border border-zinc-200 font-mono font-medium shrink-0 whitespace-nowrap"
+                        : "px-2 py-0.5 rounded-md text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium shrink-0 whitespace-nowrap");
             }
 
             const rootkitStatus = document.getElementById('res-rootkit-status');
@@ -521,8 +1067,15 @@
             if (data.indicators && data.indicators.rootkit_status) {
                 rootkitStatus.innerText = data.indicators.rootkit_status;
                 rootkitBadge.innerText = data.indicators.rootkit_badge;
-                rootkitStatus.className = rootkitCount > 0 ? "font-semibold text-sm text-purple-400" : "font-semibold text-sm text-green-400";
-                rootkitBadge.className = rootkitCount > 0 ? "px-2 py-1 rounded text-xs bg-purple-900 text-purple-300 font-mono" : "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+                const isUnavail = data.indicators.rootkit_badge === 'Unavailable';
+                rootkitStatus.className = rootkitCount > 0
+                    ? "font-semibold text-sm text-red-600 leading-snug break-words"
+                    : (isUnavail ? "font-semibold text-sm text-zinc-500 leading-snug break-words" : "font-semibold text-sm text-zinc-900 leading-snug break-words");
+                rootkitBadge.className = rootkitCount > 0
+                    ? "px-2 py-0.5 rounded-md text-[11px] bg-red-50 text-red-700 border border-red-200 font-mono font-medium shrink-0 whitespace-nowrap"
+                    : (isUnavail
+                        ? "px-2 py-0.5 rounded-md text-[11px] bg-zinc-100 text-zinc-600 border border-zinc-200 font-mono font-medium shrink-0 whitespace-nowrap"
+                        : "px-2 py-0.5 rounded-md text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium shrink-0 whitespace-nowrap");
             }
 
             const yaraStatus = document.getElementById('res-yara-status');
@@ -530,8 +1083,15 @@
             if (data.indicators && data.indicators.yara_status) {
                 yaraStatus.innerText = data.indicators.yara_status;
                 yaraBadge.innerText = data.indicators.yara_badge;
-                yaraStatus.className = yaraCount > 0 ? "font-semibold text-sm text-red-400" : "font-semibold text-sm text-green-400";
-                yaraBadge.className = yaraCount > 0 ? "px-2 py-1 rounded text-xs bg-red-900 text-red-300 font-mono" : "px-2 py-1 rounded text-xs bg-green-900 text-green-300 font-mono";
+                const isUnavail = data.indicators.yara_badge === 'Unavailable';
+                yaraStatus.className = yaraCount > 0
+                    ? "font-semibold text-sm text-red-600 leading-snug break-words"
+                    : (isUnavail ? "font-semibold text-sm text-zinc-500 leading-snug break-words" : "font-semibold text-sm text-zinc-900 leading-snug break-words");
+                yaraBadge.className = yaraCount > 0
+                    ? "px-2 py-0.5 rounded-md text-[11px] bg-red-50 text-red-700 border border-red-200 font-mono font-medium shrink-0 whitespace-nowrap"
+                    : (isUnavail
+                        ? "px-2 py-0.5 rounded-md text-[11px] bg-zinc-100 text-zinc-600 border border-zinc-200 font-mono font-medium shrink-0 whitespace-nowrap"
+                        : "px-2 py-0.5 rounded-md text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-medium shrink-0 whitespace-nowrap");
             }
 
             const mitigationStatus = document.getElementById('res-mitigation-status');
@@ -539,8 +1099,8 @@
             if (data.indicators && data.indicators.mitigation_status) {
                 mitigationStatus.innerText = data.indicators.mitigation_status;
                 mitigationBadge.innerText = data.indicators.mitigation_badge;
-                mitigationStatus.className = "font-semibold text-sm text-blue-400";
-                mitigationBadge.className = "px-2 py-1 rounded text-xs bg-blue-900 text-blue-300 font-mono";
+                mitigationStatus.className = "font-semibold text-sm text-zinc-900 leading-snug break-words";
+                mitigationBadge.className = "px-2 py-0.5 rounded-md text-[11px] bg-blue-50 text-blue-700 border border-blue-200 font-mono font-medium shrink-0 whitespace-nowrap";
             }
 
             const invId = data.investigation_id;
@@ -550,22 +1110,22 @@
                 const htmlBtn = document.getElementById('view-html-btn');
                 const downloadHtmlBtn = document.getElementById('download-html-btn');
                 const jsonBtn = document.getElementById('download-json-btn');
-                
+
                 pdfBtn.href = `/report/download/pdf/${invId}`;
                 pdfBtn.setAttribute('download', `COMPY_${prefix}${invId}_Analysis_Report.pdf`);
-                
+
                 htmlBtn.href = `/report/view/html/${invId}`;
                 htmlBtn.target = '_blank';
                 htmlBtn.rel = 'noopener noreferrer';
-                
+
                 if (downloadHtmlBtn) {
                     downloadHtmlBtn.href = `/report/download/html/${invId}`;
                     downloadHtmlBtn.setAttribute('download', `COMPY_${prefix}${invId}_Analysis_Report.html`);
                 }
-                
+
                 jsonBtn.href = `/report/download/json/${invId}`;
                 jsonBtn.setAttribute('download', `COMPY_${prefix}${invId}_Analysis_Report.json`);
-                
+
                 document.getElementById('result-actions').classList.remove('hidden');
             }
         }

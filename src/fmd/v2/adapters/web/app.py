@@ -578,6 +578,31 @@ async def get_status(job_id: str):
         
     return job
 
+@app.get("/api/posture")
+async def get_posture():
+    total_jobs = len(JOBS_DB)
+    completed_runs = len(REPORTS_DB)
+    latest_inv_id = None
+    latest_verdict = None
+    total_findings = 0
+    if REPORTS_DB:
+        latest_inv_id = list(REPORTS_DB.keys())[-1]
+        latest_report = REPORTS_DB[latest_inv_id]
+        latest_verdict = latest_report.get("verdict") or latest_report.get("finding")
+        total_findings = (
+            latest_report.get("ppid_count", 0)
+            + latest_report.get("rootkit_count", 0)
+            + latest_report.get("yara_count", 0)
+            + latest_report.get("injected_count", 0)
+        )
+    return {
+        "targets_analyzed": total_jobs,
+        "completed_runs": completed_runs,
+        "latest_investigation_id": latest_inv_id,
+        "latest_verdict": latest_verdict,
+        "latest_findings_count": total_findings
+    }
+
 def _resolve_investigation_id(target_id: str) -> str:
     """Resolves a job_id (UUID) to its associated investigation_id, or returns target_id."""
     if not target_id:

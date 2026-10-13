@@ -10,6 +10,7 @@ import os
 import argparse
 import hashlib
 from pathlib import Path
+from typing import Optional, List
 from datetime import datetime, timezone
 
 # Ensure src directory is in sys.path and fileless_detector\src is purged
