@@ -28,9 +28,9 @@ def generate_donut_chart(counts: Dict[str, int], width: int = 240, height: int =
     if total == 0:
         # Render a clean/empty circle
         return f'''<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="{cx}" cy="{cy}" r="{radius}" fill="none" stroke="#E2E8F0" stroke-width="{radius - inner_radius}"/>
-            <text x="{cx}" y="{cy - 5}" text-anchor="middle" font-family="Inter, sans-serif" font-size="20" font-weight="bold" fill="#16A34A">0</text>
-            <text x="{cx}" y="{cy + 15}" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" fill="#64748B">FINDINGS</text>
+            <circle cx="{cx}" cy="{cy}" r="{radius}" fill="#FFFFFF" stroke="#E4E4E7" stroke-width="{radius - inner_radius}"/>
+            <text x="{cx}" y="{cy - 4}" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="22" font-weight="700" fill="#16A34A">0</text>
+            <text x="{cx}" y="{cy + 15}" text-anchor="middle" font-family="Inter, sans-serif" font-size="9.5" font-weight="600" fill="#71717A" letter-spacing="1">FINDINGS</text>
         </svg>'''
 
     current_angle = -90.0
@@ -68,8 +68,8 @@ def generate_donut_chart(counts: Dict[str, int], width: int = 240, height: int =
     svg_content = f'''<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">
         {"".join(paths)}
         <circle cx="{cx}" cy="{cy}" r="{inner_radius - 2}" fill="#FFFFFF"/>
-        <text x="{cx}" y="{cy - 4}" text-anchor="middle" font-family="Inter, sans-serif" font-size="24" font-weight="800" fill="#0B1220">{total}</text>
-        <text x="{cx}" y="{cy + 16}" text-anchor="middle" font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#64748B" letter-spacing="1">FINDINGS</text>
+        <text x="{cx}" y="{cy - 3}" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="26" font-weight="700" fill="#09090B">{total}</text>
+        <text x="{cx}" y="{cy + 16}" text-anchor="middle" font-family="Inter, sans-serif" font-size="9.5" font-weight="600" fill="#71717A" letter-spacing="1">FINDINGS</text>
     </svg>'''
     return svg_content
 
@@ -123,29 +123,29 @@ def generate_risk_gauge(score: int, width: int = 260, height: int = 150) -> str:
             </linearGradient>
         </defs>
         <!-- Background track -->
-        <path d="M {x0} {y0} A {radius} {radius} 0 0 1 {x1} {y1}" fill="none" stroke="#E2E8F0" stroke-width="{stroke_w}" stroke-linecap="round"/>
+        <path d="M {x0} {y0} A {radius} {radius} 0 0 1 {x1} {y1}" fill="none" stroke="#E4E4E7" stroke-width="{stroke_w}" stroke-linecap="round"/>
         <!-- Gradient Colored Arc -->
         <path d="M {x0} {y0} A {radius} {radius} 0 0 1 {x1} {y1}" fill="none" stroke="url(#gaugeGrad)" stroke-width="{stroke_w - 2}" stroke-linecap="round"/>
         <!-- Needle -->
-        <line x1="{cx}" y1="{cy}" x2="{nx:.2f}" y2="{ny:.2f}" stroke="#0B1220" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="{cx}" cy="{cy}" r="6" fill="#0B1220"/>
-        <circle cx="{cx}" cy="{cy}" r="3" fill="#22D3EE"/>
+        <line x1="{cx}" y1="{cy}" x2="{nx:.2f}" y2="{ny:.2f}" stroke="#09090B" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="{cx}" cy="{cy}" r="6" fill="#09090B"/>
+        <circle cx="{cx}" cy="{cy}" r="2.5" fill="#FFFFFF"/>
         <!-- Numerical Display -->
-        <text x="{cx}" y="{cy - 30}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="28" font-weight="900" fill="{score_color}">{score}</text>
-        <text x="{cx}" y="{cy - 12}" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" font-weight="800" fill="#64748B" letter-spacing="1.5">{level_text}</text>
+        <text x="{cx}" y="{cy - 30}" text-anchor="middle" font-family="'Playfair Display', Georgia, serif" font-size="28" font-weight="700" fill="{score_color}">{score}</text>
+        <text x="{cx}" y="{cy - 12}" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" font-weight="700" fill="#52525B" letter-spacing="1.5">{level_text}</text>
     </svg>'''
     return svg
 
 
 def generate_process_tree_svg(nodes: List[Dict[str, Any]], width: int = 700, height: int = 285) -> str:
-    """Renders a high-density, professional process tree diagram highlighting anomalous branches in red."""
+    """Renders a high-density, professional process tree diagram on a pure white background highlighting anomalous branches in red."""
     if not nodes:
-        return f'<svg width="{width}" height="60" viewBox="0 0 {width} 60"><text x="20" y="35" font-family="Inter" font-size="12" fill="#64748B">No process tree nodes provided.</text></svg>'
+        return f'<svg width="{width}" height="60" viewBox="0 0 {width} 60"><rect width="{width}" height="60" fill="#FFFFFF"/><text x="20" y="35" font-family="Inter" font-size="12" fill="#52525B">No process tree nodes provided.</text></svg>'
     
     svg_elements = []
-    svg_elements.append(f'<rect width="{width}" height="{height}" rx="6" fill="#0B1220"/>')
-    svg_elements.append(f'<line x1="20" y1="24" x2="{width - 20}" y2="24" stroke="#1E293B" stroke-width="1"/>')
-    svg_elements.append(f'<text x="25" y="17" font-family="JetBrains Mono, monospace" font-size="9.5" font-weight="bold" fill="#22D3EE">&#9670; PROCESS LINEAGE &amp; ANCESTRY GRAPH (LIVE MEMORY STATE)</text>')
+    svg_elements.append(f'<rect width="{width}" height="{height}" rx="6" fill="#FFFFFF"/>')
+    svg_elements.append(f'<line x1="20" y1="26" x2="{width - 20}" y2="26" stroke="#E4E4E7" stroke-width="1"/>')
+    svg_elements.append(f'<text x="25" y="18" font-family="\'Playfair Display\', Georgia, serif" font-size="10.5" font-weight="700" fill="#09090B">&#9670; Process Lineage &amp; Ancestry Graph (Live Memory State)</text>')
 
     # Structured visual coordinates for nodes
     tree_layout = [
@@ -178,15 +178,15 @@ def generate_process_tree_svg(nodes: List[Dict[str, Any]], width: int = 700, hei
             parent_item = tree_layout[p_idx]
             px = parent_item["x"] + 20
             py = parent_item["y"] + parent_item["h"]
-            svg_elements.append(f'<path d="M {px} {py} L {px} {y + h/2} L {x} {y + h/2}" fill="none" stroke="{"#EF4444" if is_bad else "#334155"}" stroke-width="1.5" stroke-dasharray="{"none" if not is_bad else "3,2"}"/>')
+            svg_elements.append(f'<path d="M {px} {py} L {px} {y + h/2} L {x} {y + h/2}" fill="none" stroke="{"#DC2626" if is_bad else "#A1A1AA"}" stroke-width="1.5" stroke-dasharray="{"none" if not is_bad else "3,2"}"/>')
 
-        bg_col = "#7F1D1D" if is_bad else "#1E293B"
-        border_col = "#EF4444" if is_bad else "#334155"
-        text_col = "#FECACA" if is_bad else "#E2E8F0"
+        bg_col = "#FFFFFF"
+        border_col = "#DC2626" if is_bad else "#D4D4D8"
+        text_col = "#991B1B" if is_bad else "#09090B"
         
-        svg_elements.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="4" fill="{bg_col}" stroke="{border_col}" stroke-width="{2 if is_bad else 1}"/>')
+        svg_elements.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="4" fill="{bg_col}" stroke="{border_col}" stroke-width="{1.75 if is_bad else 1}"/>')
         svg_elements.append(f'<text x="{x + 8}" y="{y + 13}" font-family="JetBrains Mono, monospace" font-size="9.5" font-weight="bold" fill="{text_col}">{name} (PID: {pid})</text>')
-        svg_elements.append(f'<text x="{x + 8}" y="{y + 24}" font-family="JetBrains Mono, monospace" font-size="7.5" fill="#94A3B8">PPID: {ppid} | {create_ts[11:19]}</text>')
+        svg_elements.append(f'<text x="{x + 8}" y="{y + 24}" font-family="JetBrains Mono, monospace" font-size="7.5" fill="#52525B">PPID: {ppid} | {create_ts[11:19]}</text>')
         
         if is_bad:
             badge_text = item.get("bad_tag", "ANOMALY")

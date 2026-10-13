@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Cyber Forensic Analysis Report - {{ data.case.id }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
     <style>
         {{ css_content | safe }}
         @page {
@@ -34,10 +37,10 @@
                 COMPY V2 FORENSIC ENGINE // DIGITAL EVIDENCE REPORT
                 {% endif %}
             </div>
-            <h1 class="cover-title">CYBER FORENSIC ANALYSIS REPORT</h1>
+            <h1 class="cover-title">Cyber Forensic Analysis Report</h1>
             <div class="cover-subtitle">VOLATILE MEMORY FORENSICS // FILELESS MALWARE &amp; ROOTKIT AUDIT</div>
             
-            <div class="cover-banner-alert" {% if data.case.is_synthetic_demo %}style="background: #FEF3C7; color: #92400E; border-color: #F59E0B;"{% endif %}>
+            <div class="cover-banner-alert" {% if data.case.is_synthetic_demo %}style="background: #FFFFFF; color: #92400E; border-color: #D97706; border-left: 4px solid #D97706;"{% endif %}>
                 {% if data.case.is_synthetic_demo %}
                 <span>&#9888; SYNTHETIC DEMONSTRATION RUN: SYNTHETIC DATA ONLY &mdash; NOT REAL FORENSIC EVIDENCE</span>
                 {% elif data.case.statutory_declaration %}
@@ -50,7 +53,7 @@
             <div class="cover-grid">
                 <!-- Case & Examiner Credentials Card -->
                 <div class="cover-card">
-                    <div class="cover-card-title">CASE &amp; INVESTIGATION REGISTRY</div>
+                    <div class="cover-card-title">Case &amp; Investigation Registry</div>
                     <table class="cover-meta-table">
                         <tr><td class="label">Investigation ID:</td><td class="val">{{ data.case.id }}</td></tr>
                         <tr><td class="label">Reference / Case Ref:</td><td class="val">{{ data.case.fir_number or 'N/A' }}</td></tr>
@@ -65,7 +68,7 @@
 
                 <!-- Verdict & Risk Overview Card -->
                 <div class="cover-card" style="text-align: center;">
-                    <div class="cover-card-title">FORENSIC VERDICT &amp; RISK SCORE</div>
+                    <div class="cover-card-title">Forensic Verdict &amp; Risk Score</div>
                     <div style="margin: 6px 0;">
                         {% set v_disp = data.summary.verdict_label or (
                             'MALICIOUS' if data.summary.verdict == 'DETECTED' else (
@@ -79,7 +82,7 @@
                         {% elif data.summary.verdict == 'NOT DETECTED' %}
                         <span class="badge badge-clean" style="font-size: 11pt; padding: 4px 14px;">{{ v_disp }}</span>
                         {% elif data.summary.verdict == 'PARTIAL' %}
-                        <span class="badge badge-unknown" style="font-size: 11pt; padding: 4px 14px; background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B;">{{ v_disp }}</span>
+                        <span class="badge badge-unknown" style="font-size: 11pt; padding: 4px 14px; background: #FFFFFF; color: #92400E; border: 1px solid #D97706;">{{ v_disp }}</span>
                         {% else %}
                         <span class="badge badge-unknown" style="font-size: 11pt; padding: 4px 14px;">{{ v_disp }}</span>
                         {% endif %}
@@ -89,14 +92,14 @@
                         {{ risk_gauge_svg | safe }}
                     </div>
                     
-                    <div style="font-size: 7.5pt; font-weight: 700; color: #E2E8F0; margin-top: 2px;">
+                    <div style="font-size: 7.5pt; font-weight: 700; color: #09090B; margin-top: 2px;">
                         HEURISTIC TRIAGE SCORE: {{ data.summary.risk_score }} / 100
                     </div>
-                    <div style="font-size: 6pt; color: #94A3B8; margin-top: 1px;">
+                    <div style="font-size: 6pt; color: #52525B; margin-top: 1px;">
                         (Heuristic anomaly score &mdash; not infection probability)
                     </div>
                     
-                    <div style="font-size: 6.5pt; color: #64748B; margin-top: 4px;">
+                    <div style="font-size: 6.5pt; color: #52525B; margin-top: 4px;">
                         Engine: {{ data.engine.name }} {{ data.engine.version }} ({{ data.engine.build }})
                     </div>
                 </div>
@@ -104,16 +107,16 @@
 
             <!-- Evidence Identity Box -->
             <div class="cover-card" style="margin-bottom: 16px;">
-                <div class="cover-card-title">DIGITAL EVIDENCE IDENTIFICATION &amp; HASH VERIFICATION</div>
+                <div class="cover-card-title">Digital Evidence Identification &amp; Hash Verification</div>
                 <table class="cover-meta-table">
                     <tr><td class="label">Source Artifact:</td><td class="val">{{ data.evidence.filename }} ({{ data.evidence.size }})</td></tr>
                     {% if data.evidence.filepath and data.evidence.filepath != data.evidence.filename %}
                     <tr><td class="label">Available Path:</td><td class="val" style="font-size: 7pt; font-family: 'JetBrains Mono', monospace;">{{ data.evidence.filepath }}</td></tr>
                     {% endif %}
                     <tr><td class="label">Detected Type:</td><td class="val"><strong>{{ data.evidence.detected_type or 'Volatile Memory Image (Raw RAM)' }}</strong></td></tr>
-                    <tr><td class="label">SHA-256 Hash:</td><td class="val" style="color: #22D3EE;">{{ data.evidence.sha256 }}</td></tr>
+                    <tr><td class="label">SHA-256 Hash:</td><td class="val" style="color: #1D4ED8; font-weight: 700;">{{ data.evidence.sha256 }}</td></tr>
                     {% if data.evidence.sha1 %}
-                    <tr><td class="label">SHA-1 Hash:</td><td class="val" style="color: #94A3B8;">{{ data.evidence.sha1 }}</td></tr>
+                    <tr><td class="label">SHA-1 Hash:</td><td class="val" style="color: #3F3F46;">{{ data.evidence.sha1 }}</td></tr>
                     {% endif %}
                     <tr><td class="label">MD5 Hash:</td><td class="val">{{ data.evidence.md5 }}</td></tr>
                     <tr><td class="label">Format Validation:</td><td class="val">{{ data.evidence.format_validation or 'Validated Memory Image' }}</td></tr>
@@ -125,13 +128,13 @@
             <div style="display: flex; align-items: center; gap: 14px;">
                 {{ qr_code_svg | safe }}
                 <div>
-                    <div style="font-weight: 700; color: #E2E8F0; font-family: 'JetBrains Mono', monospace;">HASH-AUTHENTICATED FORENSIC REPORT</div>
-                    <div style="color: #94A3B8; font-size: 6.5pt;">Scan QR to verify cryptographic signature, Case ID, and SHA-256 match.</div>
+                    <div style="font-weight: 700; color: #09090B; font-family: 'Playfair Display', Georgia, serif; font-size: 9pt;">Hash-Authenticated Forensic Report</div>
+                    <div style="color: #52525B; font-size: 6.5pt;">Scan QR to verify cryptographic signature, Case ID, and SHA-256 match.</div>
                 </div>
             </div>
             <div style="text-align: right;">
-                <div style="font-weight: 800; color: #E2E8F0;">{{ data.case.examiner.agency }}</div>
-                <div>{% if data.case.department %}{{ data.case.department }}{% else %}DFIR INVESTIGATION DIVISION{% endif %}</div>
+                <div style="font-weight: 700; color: #09090B; font-family: 'Playfair Display', Georgia, serif; font-size: 9pt;">{{ data.case.examiner.agency }}</div>
+                <div style="color: #52525B;">{% if data.case.department %}{{ data.case.department }}{% else %}DFIR INVESTIGATION DIVISION{% endif %}</div>
             </div>
         </div>
     </div>
@@ -176,7 +179,7 @@
         </div>
 
         {% if data.case.is_synthetic_demo %}
-        <div class="callout callout-warning no-break" style="background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+        <div class="callout callout-warning no-break" style="background: #FFFFFF; border-color: #D97706; color: #92400E;">
             <div class="callout-title">&#9888; Demonstration Notice &mdash; Synthetic Fixture Data</div>
             This document was generated using synthetic demonstration fixtures. It does not reflect analysis of a physical memory image and does not represent real expert testimony, statutory certification, or judicial evidence.
         </div>
@@ -302,7 +305,7 @@
             </div>
 
             <!-- Severity Donut Column -->
-            <div style="background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px; text-align: center;">
+            <div style="background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px; text-align: center;">
                 <h3 class="micro-title" style="margin-top: 0;">Threats by Severity</h3>
                 <div style="margin: 4px auto;">
                     {{ donut_svg | safe }}
@@ -515,17 +518,17 @@
             Corroborated findings confirm the presence of structural anomalies within the examined scope. Memory artifacts reflect indicators requiring immediate isolation and detailed forensic analysis.
         </div>
         {% elif data.summary.verdict == 'NOT DETECTED' %}
-        <div class="callout callout-info no-break" style="background: #F0FDF4; border-color: #22C55E; color: #15803D;">
+        <div class="callout callout-info no-break" style="background: #FFFFFF; border-color: #16A34A; color: #15803D;">
             <div class="callout-title" style="color: #15803D;">&#10004; Composite Assessment &mdash; Clean Within Scope</div>
             No corroborated malware anomalies were detected within the executed detection modules. Note that unexamined areas (such as unexecuted hook or driver modules) were not evaluated and cannot be asserted clean.
         </div>
         {% elif data.summary.verdict == 'PARTIAL' %}
-        <div class="callout callout-warning no-break" style="background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+        <div class="callout callout-warning no-break" style="background: #FFFFFF; border-color: #D97706; color: #92400E;">
             <div class="callout-title" style="color: #92400E;">&#9888; Composite Assessment &mdash; Partial Coverage</div>
             Analysis completed with partial capability coverage. One or more required analytical views were unavailable. No conclusive assessment can be drawn regarding unexamined modules.
         </div>
         {% else %}
-        <div class="callout callout-warning no-break" style="background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+        <div class="callout callout-warning no-break" style="background: #FFFFFF; border-color: #D97706; color: #92400E;">
             <div class="callout-title" style="color: #92400E;">&#9888; Composite Assessment &mdash; Inconclusive / Insufficient Evidence</div>
             Analysis could not establish a definitive threat assessment. Requisite evidence, symbol resolution, or corroborated observations were insufficient to form a conclusive determination.
         </div>
@@ -573,7 +576,7 @@
         {% endif %}
 
         <!-- Process Tree SVG Diagram -->
-        <div class="no-break" style="margin-bottom: 12px; border: 1px solid #1E293B; border-radius: 6px; overflow: hidden;">
+        <div class="no-break" style="margin-bottom: 12px; background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: 6px; overflow: hidden;">
             {{ process_tree_svg | safe }}
         </div>
 
@@ -610,7 +613,7 @@
             Observed parent-process relationships violate standard operating system execution baselines, indicating potential process masquerading or PPID spoofing (MITRE T1134.004).
         </div>
         {% else %}
-        <div class="callout callout-info no-break" style="background: #F0FDF4; border-color: #22C55E; color: #15803D;">
+        <div class="callout callout-info no-break" style="background: #FFFFFF; border-color: #16A34A; color: #15803D;">
             <div class="callout-title" style="color: #15803D;">&#10004; Lineage Baseline Audit &mdash; No Discrepancies</div>
             All audited processes conformed to baseline parent-child execution hierarchies within the examined scope.
         </div>
@@ -755,9 +758,9 @@
 
         <!-- Detailed Match Cards -->
         {% for y in data.yara_scans %}
-        <div class="no-break" style="background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+        <div class="no-break" style="background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px; margin-bottom: 10px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span class="mono" style="font-weight: 800; font-size: 8.5pt; color: #1E293B;">RULE: {{ y.rule }}</span>
+                <span class="mono" style="font-weight: 800; font-size: 8.5pt; color: #09090B;">RULE: {{ y.rule }}</span>
                 <span class="badge {% if y.severity == 'CRITICAL' %}badge-critical{% else %}badge-high{% endif %}">{{ y.severity }}</span>
             </div>
             <div style="font-size: 7.5pt; margin-bottom: 6px; color: #334155;">{{ y.description }}</div>
@@ -777,11 +780,11 @@
             {% endif %}
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 7pt; margin-top: 6px;">
-                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 6px; border-radius: 4px;">
+                <div style="background: #FFFFFF; border: 1px solid #E4E4E7; padding: 6px; border-radius: 4px;">
                     <strong style="color: #991B1B;">Why It Matters:</strong><br/>
                     {{ y.why_it_matters or 'Deterministic indicator of malicious payload pattern.' }}
                 </div>
-                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 6px; border-radius: 4px;">
+                <div style="background: #FFFFFF; border: 1px solid #E4E4E7; padding: 6px; border-radius: 4px;">
                     <strong style="color: #475569;">Scope &amp; False Positive Considerations:</strong><br/>
                     {{ y.false_positive_considerations or 'Administrative scripts or telemetry hooks may share common substrings.' }}
                 </div>
@@ -799,7 +802,7 @@
             Matched signatures provide deterministic proof of weaponized code constructs, known download cradles, or shellcode execution sequences in active process memory.
         </div>
         {% else %}
-        <div class="callout callout-info no-break" style="background: #F0FDF4; border-color: #22C55E; color: #15803D; margin-top: 10px;">
+        <div class="callout callout-info no-break" style="background: #FFFFFF; border-color: #16A34A; color: #15803D; margin-top: 10px;">
             <div class="callout-title" style="color: #15803D;">&#10004; Zero Signature Matches (Clean Within Signature Scope)</div>
             The YARA multi-engine scanner executed across all extracted process command lines, image identities, and memory buffers. 0 signature hits were observed across active detection rulesets. This confirms the absence of known signature indicators within executed rules, distinct from an unexecuted or failed scan.
         </div>
@@ -879,12 +882,12 @@
 
                         {% if f.artifacts and f.artifacts.disassembly %}
                         <div class="code-title">DISASSEMBLY SNIPPET</div>
-                        <div class="hex-dump-box" style="color: #4ADE80;">{{ f.artifacts.disassembly }}</div>
+                        <div class="hex-dump-box" style="color: #09090B;">{{ f.artifacts.disassembly }}</div>
                         {% endif %}
 
                         {% if f.artifacts and f.artifacts.decoded_script %}
                         <div class="code-title">DECODED PAYLOAD TRANSLATION</div>
-                        <div class="hex-dump-box" style="color: #FCD34D;">{{ f.artifacts.decoded_script }}</div>
+                        <div class="hex-dump-box" style="color: #1E3A8A;">{{ f.artifacts.decoded_script }}</div>
                         {% endif %}
 
                         {% if not f.artifacts or (not f.artifacts.hex_dump and not f.artifacts.disassembly and not f.artifacts.decoded_script) %}
@@ -956,22 +959,22 @@
                 <th style="width: 16%;">Exfiltration</th>
             </tr>
             <tr>
-                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1059.001<br/>PowerShell</td>
-                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1547.001<br/>Registry Run Keys</td>
-                <td style="background: #F1F5F9; color: #64748B;">T1068<br/>Exploitation</td>
-                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1055.012<br/>Process Hollowing</td>
-                <td style="background: #F1F5F9; color: #64748B;">T1057<br/>Process Discovery</td>
-                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1071.001<br/>Web Protocols</td>
-                <td style="background: #F1F5F9; color: #64748B;">T1041<br/>C2 Channel</td>
+                <td style="background: #FFFFFF; color: #DC2626; font-weight: bold; border-left: 3px solid #DC2626;">T1059.001<br/>PowerShell</td>
+                <td style="background: #FFFFFF; color: #DC2626; font-weight: bold; border-left: 3px solid #DC2626;">T1547.001<br/>Registry Run Keys</td>
+                <td style="background: #FFFFFF; color: #71717A;">T1068<br/>Exploitation</td>
+                <td style="background: #FFFFFF; color: #DC2626; font-weight: bold; border-left: 3px solid #DC2626;">T1055.012<br/>Process Hollowing</td>
+                <td style="background: #FFFFFF; color: #71717A;">T1057<br/>Process Discovery</td>
+                <td style="background: #FFFFFF; color: #DC2626; font-weight: bold; border-left: 3px solid #DC2626;">T1071.001<br/>Web Protocols</td>
+                <td style="background: #FFFFFF; color: #71717A;">T1041<br/>C2 Channel</td>
             </tr>
             <tr>
-                <td style="background: #F1F5F9; color: #64748B;">T1204.002<br/>Malicious File</td>
-                <td style="background: #F1F5F9; color: #64748B;">T1053<br/>Scheduled Task</td>
-                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1134.004<br/>PPID Spoofing</td>
-                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1014<br/>Rootkit (DKOM)</td>
-                <td style="background: #F1F5F9; color: #64748B;">T1082<br/>System Info</td>
-                <td style="background: #FEE2E2; color: #991B1B; font-weight: bold;">T1573<br/>Encrypted C2</td>
-                <td style="background: #F1F5F9; color: #64748B;">T1020<br/>Automated Exfil</td>
+                <td style="background: #FFFFFF; color: #71717A;">T1204.002<br/>Malicious File</td>
+                <td style="background: #FFFFFF; color: #71717A;">T1053<br/>Scheduled Task</td>
+                <td style="background: #FFFFFF; color: #DC2626; font-weight: bold; border-left: 3px solid #DC2626;">T1134.004<br/>PPID Spoofing</td>
+                <td style="background: #FFFFFF; color: #DC2626; font-weight: bold; border-left: 3px solid #DC2626;">T1014<br/>Rootkit (DKOM)</td>
+                <td style="background: #FFFFFF; color: #71717A;">T1082<br/>System Info</td>
+                <td style="background: #FFFFFF; color: #DC2626; font-weight: bold; border-left: 3px solid #DC2626;">T1573<br/>Encrypted C2</td>
+                <td style="background: #FFFFFF; color: #71717A;">T1020<br/>Automated Exfil</td>
             </tr>
         </table>
 
@@ -1104,7 +1107,7 @@
             <tr><td>Stealth / Rootkit Mechanism</td><td>15%</td><td>DKOM unlinking, unbacked memory, PPID spoofing</td><td>1.0 (Active Evasion)</td></tr>
             <tr><td>Persistence Vector</td><td>15%</td><td>Registry Run keys, WMI event subscriptions</td><td>0.8 (Registry Hooked)</td></tr>
             <tr><td>Execution Privilege</td><td>10%</td><td>NT AUTHORITY\SYSTEM vs Standard User execution</td><td>1.0 (SYSTEM Access)</td></tr>
-            <tr style="background: #F1F5F9; font-weight: bold;"><td colspan="3">CALCULATED COMPOSITE FORENSIC RISK SCORE:</td><td style="color: var(--sev-critical); font-size: 9pt;">{{ data.summary.risk_score }} / 100</td></tr>
+            <tr style="background: #FFFFFF; font-weight: bold; border-top: 2px solid #09090B;"><td colspan="3">CALCULATED COMPOSITE FORENSIC RISK SCORE:</td><td style="color: var(--sev-critical); font-size: 9pt;">{{ data.summary.risk_score }} / 100</td></tr>
         </table>
 
         <h2 class="sub-title">14. Prioritized Remediation Action Plan</h2>
@@ -1191,7 +1194,7 @@
         <h2 class="sub-title">Candidate Verification Worksheet (Unresolved Candidates)</h2>
         {% if data.candidate_worksheet %}
         {% for cand in data.candidate_worksheet %}
-        <div class="no-break" style="border: 1px solid #CBD5E1; border-radius: 4px; padding: 8px; margin-bottom: 8px; background: #FFFBEB;">
+        <div class="no-break" style="border: 1px solid #D4D4D8; border-left: 3px solid #D97706; border-radius: 4px; padding: 8px; margin-bottom: 8px; background: #FFFFFF;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="font-weight: bold; color: #92400E; font-family: 'JetBrains Mono', monospace;">CANDIDATE ID: {{ cand.candidate_id }}</span>
                 <span class="badge badge-unknown">UNRESOLVED HYPOTHESIS</span>
@@ -1282,15 +1285,15 @@
                 <div>Each seal entry cryptographically binds the canonical payload to the preceding state hash (covering index, timestamp, evidence SHA-256, filename, investigation ID, verdict, and compilation findings count). This validates that report artifact metadata has not been altered post-compilation. Note: As a self-contained hash chain, this detects tampering but does not substitute for an asymmetric digital signature or physical chain-of-custody documentation.</div>
             </div>
             {% if data.report_integrity_seal_status and data.report_integrity_seal_status.is_verified %}
-            <div style="padding: 4px 10px; background: #DCFCE7; border: 1px solid #86EFAC; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #166534; white-space: nowrap;">
+            <div style="padding: 4px 10px; background: #FFFFFF; border: 1.5px solid #16A34A; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #166534; white-space: nowrap;">
                 &#10004; METADATA SEAL CRYPTOGRAPHICALLY VERIFIED
             </div>
             {% elif data.report_integrity_seal_status and data.report_integrity_seal_status.status == 'INVALID' %}
-            <div style="padding: 4px 10px; background: #FEE2E2; border: 1px solid #FCA5A5; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #991B1B; white-space: nowrap;">
+            <div style="padding: 4px 10px; background: #FFFFFF; border: 1.5px solid #DC2626; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #991B1B; white-space: nowrap;">
                 &#10006; SEAL INTEGRITY VERIFICATION FAILED
             </div>
             {% else %}
-            <div style="padding: 4px 10px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #475569; white-space: nowrap;">
+            <div style="padding: 4px 10px; background: #FFFFFF; border: 1.5px solid #71717A; border-radius: 4px; font-weight: 800; font-size: 7.5pt; color: #3F3F46; white-space: nowrap;">
                 &#9888; SEAL GENERATED &mdash; VERIFICATION PENDING
             </div>
             {% endif %}
@@ -1353,7 +1356,7 @@
         <!-- Technical Evidentiary Assessment -->
         <h2 class="sub-title">Technical Evidentiary Assessment</h2>
         {% if data.case.is_synthetic_demo %}
-        <div class="callout callout-warning no-break" style="margin-bottom: 12px; background: #FEF3C7; border-color: #F59E0B; color: #92400E;">
+        <div class="callout callout-warning no-break" style="margin-bottom: 12px; background: #FFFFFF; border-color: #D97706; color: #92400E;">
             <div class="callout-title">&#9888; DEMONSTRATION NOTICE &mdash; NOT LEGAL EVIDENCE</div>
             This document was generated using synthetic demonstration fixtures. It does not reflect analysis of a physical memory image and is not admissible in court.
         </div>
@@ -1397,7 +1400,7 @@
         <p style="font-size: 7.5pt; line-height: 1.4; margin-bottom: 8px; text-align: justify;">
             The following statutory declaration was supplied by the authorizing operator:
         </p>
-        <div style="background: #F8FAFC; border: 1px solid var(--border-subtle); padding: 8px; font-size: 7.5pt; margin-bottom: 10px;">
+        <div style="background: #FFFFFF; border: 1px solid var(--border-subtle); padding: 8px; font-size: 7.5pt; margin-bottom: 10px;">
             {{ data.case.statutory_declaration }}
         </div>
         {% else %}
@@ -1432,7 +1435,7 @@
             </div>
         </div>
         {% else %}
-        <div style="margin-top: 12px; padding: 8px; background: #F8FAFC; border: 1px solid var(--border-subtle); border-radius: 4px; font-size: 7pt; color: #64748B;">
+        <div style="margin-top: 12px; padding: 8px; background: #FFFFFF; border: 1px solid var(--border-subtle); border-radius: 4px; font-size: 7pt; color: #52525B;">
             <strong>REPORT ATTESTATION STATUS:</strong> Automated Software Generation. No human operator credentials, statutory declarations, or judicial distribution details were supplied for this run. To certify this report for judicial production, an authorized forensic examiner must review the underlying evidence and execute formal jurisdiction-appropriate declarations.
         </div>
         {% endif %}
